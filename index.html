@@ -184,12 +184,27 @@ td.desc-sm{min-width:180px;max-width:280px;white-space:normal;font-size:13px}
   <div class="sync-box">
     <h3>Synchronizacja przez URL</h3>
     <p>Dane zakodowane w linku – otwórz na innym urządzeniu, dane wczytają się automatycznie.</p>
-    <div class="warn-box">⚠ Jeśli sieć korporacyjna blokuje długie URL – użyj eksportu XLSX i prześlij mailem.</div>
-    <textarea class="sync-url" id="sync-url-box" rows="3" readonly></textarea>
+    <div class="warn-box">⚠ Długi link może być obcięty w mailu. Użyj <strong>Krótki link</strong> do wysyłania SMS-em lub mailem.</div>
+    <textarea class="sync-url" id="sync-url-box" rows="2" readonly placeholder="Kliknij Odśwież aby wygenerować link..."></textarea>
     <div class="btn-row" style="margin-top:8px">
-      <button class="btn bl" onclick="copySyncUrl()">Kopiuj link</button>
-      <button class="btn" onclick="generateSyncUrl()">Odśwież</button>
+      <button class="btn bl" onclick="copySyncUrl()">📋 Kopiuj długi link</button>
+      <button class="btn" onclick="generateSyncUrl()">🔄 Odśwież</button>
       <span id="copy-msg" class="msg g" style="display:none">Skopiowano!</span>
+    </div>
+    <hr style="border:none;border-top:1px solid #c5dff5;margin:12px 0">
+    <div style="font-size:13px;font-weight:700;color:#1F4E79;margin-bottom:6px">🔗 Krótki link (do maila / SMS)</div>
+    <div style="font-size:12px;color:#555;margin-bottom:8px">TinyURL skraca długi link do ~22 znaków. Wygeneruj → skopiuj → wyślij.</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn bl" onclick="generateShortUrl()" id="short-btn">⚡ Generuj krótki link</button>
+      <span id="short-spinner" style="display:none;font-size:12px;color:#666">⏳ Generuję...</span>
+    </div>
+    <div id="short-url-wrap" style="display:none;margin-top:10px">
+      <input class="sync-url" id="short-url-box" readonly style="height:36px;padding:8px 12px;font-size:14px;font-weight:700;color:#1F4E79;cursor:pointer" onclick="copyShortUrl()" title="Kliknij aby skopiować">
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn bl" onclick="copyShortUrl()">📋 Kopiuj krótki link</button>
+        <span id="short-copy-msg" class="msg g" style="display:none">Skopiowano! ✓</span>
+        <span id="short-err" class="msg" style="display:none;color:#c62828"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -1020,6 +1035,50 @@ function generateSyncUrl(){
   var enc=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   var url=window.location.href.split('?')[0].split('#')[0]+'?d='+enc;
   document.getElementById('sync-url-box').value=url;
+  // Reset short link when long link is refreshed
+  document.getElementById('short-url-wrap').style.display='none';
+  document.getElementById('short-err').style.display='none';
+  return url;
+}
+function generateShortUrl(){
+  var longUrl=document.getElementById('sync-url-box').value;
+  if(!longUrl||longUrl.indexOf('?d=')<0){
+    // Generate first if not done yet
+    longUrl=generateSyncUrl();
+  }
+  var btn=document.getElementById('short-btn');
+  var spinner=document.getElementById('short-spinner');
+  var errEl=document.getElementById('short-err');
+  btn.disabled=true; spinner.style.display='inline'; errEl.style.display='none';
+  document.getElementById('short-url-wrap').style.display='none';
+
+  // TinyURL API – no key needed, CORS-friendly endpoint
+  fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(longUrl))
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.text();
+    })
+    .then(function(shortUrl){
+      shortUrl=shortUrl.trim();
+      if(!shortUrl.startsWith('http'))throw new Error('Nieprawidłowa odpowiedź');
+      document.getElementById('short-url-box').value=shortUrl;
+      document.getElementById('short-url-wrap').style.display='block';
+      btn.disabled=false; spinner.style.display='none';
+    })
+    .catch(function(e){
+      errEl.textContent='Błąd: '+e.message+'. Spróbuj skopiować długi link.';
+      errEl.style.display='inline';
+      btn.disabled=false; spinner.style.display='none';
+    });
+}
+function copyShortUrl(){
+  var box=document.getElementById('short-url-box');
+  box.select();
+  try{
+    navigator.clipboard.writeText(box.value)
+      .then(function(){flash('short-copy-msg');})
+      .catch(function(){document.execCommand('copy');flash('short-copy-msg');});
+  }catch(e){document.execCommand('copy');flash('short-copy-msg');}
 }
 function copySyncUrl(){
   generateSyncUrl();var box=document.getElementById('sync-url-box');box.select();
