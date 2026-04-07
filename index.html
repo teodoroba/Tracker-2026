@@ -95,6 +95,17 @@ tr:hover td{background:#f9fafb}
 .matrix-item .code{font-weight:700;min-width:80px;color:#1F4E79;font-size:12px}
 .matrix-item .desc{flex:1;color:#333}
 .matrix-del{background:none;border:none;cursor:pointer;color:#c62828;font-size:16px;padding:0 4px}
+.matrix-edit-btn{background:none;border:none;cursor:pointer;color:#1a56db;font-size:14px;padding:0 4px}
+.matrix-acc{border:1px solid #e0e0e0;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.matrix-acc-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#f5f7fa;cursor:pointer;user-select:none;gap:8px}
+.matrix-acc-hdr:hover{background:#e8edf2}
+.matrix-acc-title{font-size:14px;font-weight:700;color:#1F4E79;flex:1}
+.matrix-acc-count{font-size:12px;color:#888;margin-right:8px}
+.matrix-acc-arrow{font-size:12px;color:#888;transition:transform .2s}
+.matrix-acc-arrow.open{transform:rotate(90deg)}
+.matrix-acc-body{display:none;padding:10px 16px 14px;border-top:1px solid #e0e0e0}
+.matrix-acc-body.open{display:block}
+.matrix-add-row{display:flex;gap:6px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
 /* Wykresy – kompaktowe */
 .bi-header{background:linear-gradient(135deg,#1F4E79,#0d2b45);color:#fff;border-radius:10px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
 .bi-header h2{font-size:18px;font-weight:800;letter-spacing:.3px}
@@ -274,12 +285,48 @@ var DEFAULT_MATRIX={
     {code:'P3',desc:'Linia P3 – Chemia przemysłowa'},{code:'MAG',desc:'Magazyn'},
     {code:'LAB',desc:'Laboratorium'},{code:'BHP',desc:'Strefa BHP'},
     {code:'ADM',desc:'Administracja'},{code:'EXT',desc:'Zewnętrzny'}
+  ],
+  PRIORYTET:[
+    {code:'Wysoki',desc:'Pilne i ważne'},{code:'Sredni',desc:'Ważne, nie pilne'},
+    {code:'Niski',desc:'Niskie znaczenie'}
+  ],
+  STATUS_K:[
+    {code:'Zgloszone',desc:''},{code:'Zatwierdzone',desc:''},
+    {code:'W trakcie',desc:''},{code:'Wdrozone',desc:''},{code:'Odrzucone',desc:''}
+  ],
+  STATUS_Z:[
+    {code:'Do zrobienia',desc:''},{code:'W trakcie',desc:''},
+    {code:'Gotowe',desc:''},{code:'Zablokowane',desc:''},{code:'Anulowane',desc:''}
+  ],
+  KATEGORIA_OBS:[
+    {code:'SAFETY',desc:'BHP i bezpieczeństwo'},{code:'MASZYNY',desc:'Awarie i usterki'},
+    {code:'QUALITY',desc:'Jakość produktu'},{code:'GHP/GMP',desc:'Higiena i dobre praktyki'},
+    {code:'LUDZIE',desc:'Zespół i zachowania'},{code:'PROCESY',desc:'Przepływ i efektywność'},
+    {code:'Inne',desc:'Pozostałe'}
+  ],
+  KATEGORIA_ZAD:[
+    {code:'Kaizen/CI',desc:'Ciągłe doskonalenie'},{code:'BHP',desc:'Bezpieczeństwo'},
+    {code:'Jakosc',desc:'Jakość'},{code:'Maszyny/UR',desc:'Utrzymanie ruchu'},
+    {code:'Zespol/HR',desc:'Zespół'},{code:'Procesy',desc:'Procesy'},
+    {code:'Dokumentacja',desc:'Dokumenty i SOP'},
+    {code:'Raportowanie',desc:'Raporty i analizy'},{code:'Inne',desc:'Pozostałe'}
   ]
 };
 
 function getMatrix(){
-  try{var m=JSON.parse(localStorage.getItem(KMX));return m&&m.MASZYNA?m:JSON.parse(JSON.stringify(DEFAULT_MATRIX));}
-  catch(e){return JSON.parse(JSON.stringify(DEFAULT_MATRIX));}
+  try{
+    var m=JSON.parse(localStorage.getItem(KMX));
+    if(m&&m.MASZYNA){
+      var def=DEFAULT_MATRIX;
+      var upgraded=false;
+      Object.keys(def).forEach(function(k){
+        if(!m[k]){m[k]=JSON.parse(JSON.stringify(def[k]));upgraded=true;}
+      });
+      if(upgraded)localStorage.setItem(KMX,JSON.stringify(m));
+      return m;
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_MATRIX));
+  }catch(e){return JSON.parse(JSON.stringify(DEFAULT_MATRIX));}
 }
 function saveMatrix(m){localStorage.setItem(KMX,JSON.stringify(m));}
 function getMaszynaOptions(){
@@ -311,6 +358,15 @@ function getObsKatOptions(sel){
   // Add any custom matrix cats
   getAllMatrixCatKeys().forEach(function(k){if(cats.indexOf(k)<0)cats.push(k);});
   return cats.map(function(c){return '<option'+(c===sel?' selected':'')+'>'+c+'</option>';}).join('');
+}
+function getZadaniaListOptions(sel){
+  // Returns <option> list of current zadania titles for "Powiązane" dropdown
+  var dz=ld(KZ);
+  if(!dz.length) return '<option value="">— brak zadań —</option>';
+  return '<option value="">— wybierz zadanie —</option>'+dz.map(function(r){
+    var lbl=(r.t||'').substring(0,50)+(r.da?' ('+r.da+')':'');
+    return '<option value="'+r.id+'"'+(sel==r.id?' selected':'')+'>'+lbl+'</option>';
+  }).join('');
 }
 function getZadCatOptions(sel){
   // Zadania categories: fixed defaults + all matrix category keys
@@ -434,13 +490,13 @@ function buildKaizenLista(){
       +'<td>'+kBdg(r.s)+'</td>'
       +'<td style="font-weight:700;white-space:nowrap;font-size:12px;color:#1F4E79">'+r.n+'</td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editK('+r.id+')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delK('+r.id+');showView(\'kaizen-lista\')">✕</button>'
+      +'<button class="btn-edit" onclick="editK(\'\2\')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delK(\'\2\');showView(\'\1\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="10"><div class="empty">Brak wpisów.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#1a56db">Lista Kaizen</span>'
-    +'<div class="frow"><select onchange="showView(\'kaizen-lista\')" id="kfs"><option value="">Wszystkie statusy</option><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select>'
-    +'<button class="btn bl" onclick="showView(\'kaizen-dodaj\')">+ Dodaj</button></div></div>'
+    +'<div class="frow"><select onchange="showView(\'\2\')" id="kfs"><option value="">Wszystkie statusy</option><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select>'
+    +'<button class="btn bl" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Problem</th><th>Linia</th><th>Maszyna</th><th>Est. PLN</th><th>Zwerif. PLN</th><th>Odp.</th><th>Status</th><th>Nr</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function editK(id){
@@ -463,8 +519,8 @@ function editK(id){
     +'<div><label>Oszczędność zwerif. [PLN/rok]</label><input id="kz" type="number" value="'+(r.z||0)+'"></div>'
     +'<div><label>Odpowiedzialny</label><input id="ko" value="'+(r.o||'')+'"></div>'
     +'<div><label>Termin wdrożenia</label><input id="kt" type="date" value="'+(r.ter||'')+'"></div></div>'
-    +'<div class="btn-row"><button class="btn bl" onclick="saveEditK('+id+')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bl" onclick="saveEditK(\'\2\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
     +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
   // Set select values that need js
   setTimeout(function(){
@@ -501,14 +557,14 @@ function buildKaizenDodaj(){
     +'<div><label>Odpowiedzialny</label><input id="ko" placeholder="Imię"></div>'
     +'<div><label>Termin wdrożenia</label><input id="kt" type="date"></div></div>'
     +'<div class="btn-row"><button class="btn bl" onclick="addK()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
     +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addK(){
   var d=ld(KK);
   d.push({id:Date.now(),da:v('kda'),s:v('kst'),l:v('klin'),masz:v('kmasz'),
     k:v('kk'),m:v('km'),n:v('kn')||('K-'+(d.length+1)),p:v('kp'),r:v('kr'),
-    e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt')});
+    e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt'),pow:v('kpow')});
   sv(KK,d);flash('kmsg');renderDash();
 }
 function delK(id){if(!confirm('Usunąć?'))return;sv(KK,ld(KK).filter(function(r){return r.id!==id;}));renderDash();}
@@ -528,8 +584,8 @@ function buildObsLista(cf){
       +'<td>'+oBdg(r.k)+'</td>'
       +'<td><span class="badge '+(catColors[r.cat]||'bg-gr')+'">'+r.cat+'</span></td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editO('+r.id+')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delO('+r.id+');showView(\'obs-lista\',\''+cf+'\')">✕</button>'
+      +'<button class="btn-edit" onclick="editO(\'\2\')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delO(\'\2\');showView(\'obs-lista\',\''+cf+'\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="8"><div class="empty">Brak obserwacji'+(cf?' – '+cf:'')+'.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#2e7d32">Obserwacje'+(cf?' – '+cf:'')+'</span>'
@@ -538,7 +594,7 @@ function buildObsLista(cf){
     +'<option'+(cf==='MASZYNY'?' selected':'')+'>MASZYNY</option><option'+(cf==='QUALITY'?' selected':'')+'>QUALITY</option>'
     +'<option'+(cf==='GHP/GMP'?' selected':'')+'>GHP/GMP</option><option'+(cf==='LUDZIE'?' selected':'')+'>LUDZIE</option>'
     +'<option'+(cf==='PROCESY'?' selected':'')+'>PROCESY</option><option'+(cf==='Inne'?' selected':'')+'>Inne</option></select>'
-    +'<button class="btn bg2" onclick="showView(\'obs-dodaj\')">+ Dodaj</button></div></div>'
+    +'<button class="btn bg2" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Obserwacja</th><th>Linia</th><th>Zmiana</th><th>Interpretacja</th><th>Kaizen?</th><th>Kat.</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
@@ -556,13 +612,13 @@ function buildObsDodaj(){
     +'<div><label>Nr Kaizen</label><input id="okn" placeholder="K-003"></div>'
     +'<div><label>Priorytet</label><select id="op"><option>Sredni</option><option>Wysoki</option><option>Niski</option></select></div></div>'
     +'<div class="btn-row"><button class="btn bg2" onclick="addO()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'obs-lista\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
     +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addO(){
   var d=ld(KO);
   d.push({id:Date.now(),d:v('oda'),cat:v('ocat'),lin:v('olin'),zm:v('ozm'),
-    f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op')});
+    f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op'),pow:v('opow')});
   sv(KO,d);flash('omsg');renderDash();
 }
 function delO(id){if(!confirm('Usunąć?'))return;sv(KO,ld(KO).filter(function(r){return r.id!==id;}));renderDash();}
@@ -593,8 +649,8 @@ function editO(id){
     +'<option'+(r.pr==='Wysoki'?' selected':'')+'>Wysoki</option>'
     +'<option'+(r.pr==='Niski'?' selected':'')+'>Niski</option>'
     +'</select></div></div>'
-    +'<div class="btn-row"><button class="btn bg2" onclick="saveEditO('+id+')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'obs-lista\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bg2" onclick="saveEditO(\'\2\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
     +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
   setTimeout(function(){
     var el=document.getElementById('olin'); if(el&&r.lin)el.value=r.lin;
@@ -626,14 +682,14 @@ function buildZadaniaLista(){
       +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.cat+'</td>'
       +'<td>'+zBdg(r.s)+'</td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editZ('+r.id+')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delZ('+r.id+');showView(\'zadania-lista\')">✕</button>'
+      +'<button class="btn-edit" onclick="editZ(\'\2\')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delZ(\'\2\');showView(\'\1\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="11"><div class="empty">Brak zadań.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#6a1b9a">Lista Zadań</span>'
     +'<div class="frow"><select onchange="showView(\'zadania-lista\',this.value)"><option value="">Wszystkie statusy</option>'
     +'<option>Do zrobienia</option><option>W trakcie</option><option>Gotowe</option><option>Zablokowane</option><option>Anulowane</option></select>'
-    +'<button class="btn bp" onclick="showView(\'zadania-dodaj\')">+ Dodaj</button></div></div>'
+    +'<button class="btn bp" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Data wyst.</th><th>Priorytet</th><th>Zadanie</th><th>Termin</th><th>Dni</th><th>Odpowiedzialny</th><th>Powiązane</th><th>Opis</th><th>Kat.</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
@@ -641,8 +697,8 @@ function buildZadaniaLista(){
 function buildZadaniaDodaj(){
   return '<div class="card"><div class="ct" style="color:#6a1b9a">Nowe Zadanie</div>'
     +'<div class="fr c4"><div><label>Data wystawienia</label><input id="zda" type="date" value="'+today()+'"></div>'
-    +'<div><label>Priorytet</label><select id="zpr"><option>Sredni</option><option>Wysoki</option><option>Niski</option></select></div>'
-    +'<div><label>Status</label><select id="zst"><option>Do zrobienia</option><option>W trakcie</option><option>Gotowe</option><option>Zablokowane</option><option>Anulowane</option></select></div>'
+    +'<div><label>Priorytet</label><select id="zpr">'+getPrioOptions('')+'</select></div>'
+    +'<div><label>Status</label><select id="zst">'+getStatusZOptions('')+'</select></div>'
     +'<div><label>Termin</label><input id="zter" type="date"></div></div>'
     +'<div class="fr c3"><div><label>Tytuł zadania</label><input id="zt" placeholder="Co zrobić"></div>'
     +'<div><label>Kategoria (z Matrycy)</label><select id="zcat">'+getZadCatOptions('')+'</select></div>'
@@ -650,7 +706,7 @@ function buildZadaniaDodaj(){
     +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px"></textarea></div>'
     +'<div><label>Powiązane (nr Kaizen / źródło)</label><textarea id="zpow" style="height:60px"></textarea></div></div>'
     +'<div class="btn-row"><button class="btn bp" onclick="addZ()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
     +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addZ(){
@@ -679,8 +735,8 @@ function editZ(id){
     +'<div><label>Odpowiedzialny</label><input id="zo" value="'+(r.o||'')+'"></div></div>'
     +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px">'+(r.op||'')+'</textarea></div>'
     +'<div><label>Powiązane</label><textarea id="zpow" style="height:60px">'+(r.pow||'')+'</textarea></div></div>'
-    +'<div class="btn-row"><button class="btn bp" onclick="saveEditZ('+id+')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bp" onclick="saveEditZ(\'\2\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
     +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function saveEditZ(id){
@@ -706,10 +762,10 @@ function buildCeleLista(){
       +'<div class="cel-prog"><div class="cel-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
       +'<span style="font-size:12px;font-weight:700;color:'+barColor+'">'+pct+'%</span></div></td>'
       +'<td style="font-size:12px;color:#666">'+r.termin+'</td>'
-      +'<td><button class="btn bd" onclick="delCe('+r.id+');showView(\'cele-lista\')">✕</button></td></tr>';
+      +'<td><button class="btn bd" onclick="delCe(\'\2\');showView(\'\1\')">✕</button></td></tr>';
   }).join(''):'<tr><td colspan="7"><div class="empty">Brak celów. Dodaj pierwszy cel.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#e65100">Cele Roczne 2026</span>'
-    +'<button class="btn bo" onclick="showView(\'cele-dodaj\')">+ Dodaj cel</button></div>'
+    +'<button class="btn bo" onclick="showView(\'\1\')">+ Dodaj cel</button></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Cel</th><th>Kategoria celu</th><th>Wartość docelowa</th><th>Realizacja</th><th>Postęp</th><th>Termin</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function buildCeleDodaj(){
@@ -722,7 +778,7 @@ function buildCeleDodaj(){
     +'<div><label>Termin realizacji</label><input id="cter" type="date"></div>'
     +'<div><label>Właściciel celu</label><input id="cwl" placeholder="Imię / dział"></div></div>'
     +'<div class="btn-row"><button class="btn bo" onclick="addCe()">Zapisz cel</button>'
-    +'<button class="btn" onclick="showView(\'cele-lista\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
     +'<span class="msg g" id="cemsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addCe(){
@@ -859,50 +915,94 @@ function closeChModal(e){
 function buildMatryca(){
   var m=getMatrix();
   var cats=Object.keys(m);
-  var html='<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0">⚙ Matryca kategorii</span>'
-    +'<div class="frow"><input id="new-cat-name" placeholder="Nazwa nowej kategorii" style="width:160px">'
+  var catDesc={MASZYNA:'Maszyny w formularzach Kaizen',OBSZAR:'Linie / obszary',
+    PRIORYTET:'Priorytety zadań i obserwacji',STATUS_K:'Statusy Kaizen',
+    STATUS_Z:'Statusy Zadań',KATEGORIA_OBS:'Kategorie obserwacji',KATEGORIA_ZAD:'Kategorie zadań'};
+  var html='<div class="card" style="margin-bottom:16px"><div class="tbl-hdr" style="margin-bottom:8px">'
+    +'<span class="ct" style="margin:0">⚙ Matryca kategorii</span>'
+    +'<div class="frow"><input id="new-cat-name" placeholder="Nazwa nowej kategorii" style="width:170px">'
     +'<button class="btn bn" onclick="addCategory()">+ Dodaj kategorię</button></div></div>'
-    +'<p style="font-size:12px;color:#666;margin-bottom:14px">Zmiany w matrycy aktualizują listy wyboru w formularzach Kaizen i Obserwacje.</p></div>'
-    +'<div class="matrix-grid">';
+    +'<p style="font-size:12px;color:#666">Kliknij nagłówek kategorii aby rozwinąć. Zmiany aktualizują listy wyboru w formularzach.</p></div>';
   cats.forEach(function(cat){
-    html+='<div class="matrix-card"><h3>'+cat
-      +'<div style="display:flex;gap:6px"><input id="new-item-code-'+cat+'" placeholder="Kod" style="width:70px;font-size:12px">'
-      +'<input id="new-item-desc-'+cat+'" placeholder="Opis" style="width:140px;font-size:12px">'
-      +'<button class="btn bn" style="font-size:12px;padding:4px 8px" onclick="addMatrixItem(\''+cat+'\')">+</button>'
-      +'<button class="btn bd" style="font-size:12px;padding:4px 8px" onclick="delCategory(\''+cat+'\')">Usuń kat.</button>'
-      +'</div></h3>';
-    (m[cat]||[]).forEach(function(item,idx){
-      html+='<div class="matrix-item"><span class="code">'+item.code+'</span><span class="desc">'+item.desc+'</span>'
-        +'<button class="matrix-del" onclick="delMatrixItem(\''+cat+'\','+idx+')">✕</button></div>';
+    var items=m[cat]||[];
+    var safecat=cat.replace(/\'/g,"\\'");
+    html+='<div class="matrix-acc" id="acc-'+cat+'">'
+      +'<div class="matrix-acc-hdr" onclick="toggleAcc(\''+safecat+'\')">'
+      +'<span class="matrix-acc-title">'+cat+'</span>'
+      +'<span class="matrix-acc-count">'+items.length+' pozycji</span>'
+      +'<span style="font-size:11px;color:#888;margin-left:4px">·</span>'
+      +'<span style="font-size:11px;color:#888;flex:1;margin-left:6px">'+(catDesc[cat]||'kategoria użytkownika')+'</span>'
+      +'<span class="matrix-acc-arrow" id="arr-'+cat+'">▶</span>'
+      +'<button class="btn bd" style="font-size:11px;padding:3px 8px;margin-left:8px" onclick="event.stopPropagation();delCategory(\''+safecat+'\')">Usuń</button>'
+      +'</div>'
+      +'<div class="matrix-acc-body" id="body-'+cat+'">';
+    items.forEach(function(item,idx){
+      html+='<div class="matrix-item" id="mitem-'+cat+'-'+idx+'">'
+        +'<span class="code">'+item.code+'</span>'
+        +'<span class="desc">'+item.desc+'</span>'
+        +'<button class="matrix-edit-btn" onclick="editMatrixItem(\''+safecat+'\','+idx+')" title="Edytuj">✎</button>'
+        +'<button class="matrix-del" onclick="delMatrixItem(\''+safecat+'\','+idx+')" title="Usuń">✕</button>'
+        +'</div>';
     });
-    html+='</div>';
+    html+='<div class="matrix-add-row">'
+      +'<input id="new-item-code-'+cat+'" placeholder="Kod / Nazwa" style="width:120px;font-size:13px">'
+      +'<input id="new-item-desc-'+cat+'" placeholder="Opis (opcjonalnie)" style="flex:1;font-size:13px">'
+      +'<button class="btn bn" style="font-size:12px;padding:6px 12px" onclick="addMatrixItem(\''+safecat+'\')">+ Dodaj pozycję</button>'
+      +'</div></div></div>';
   });
-  html+='</div>';
   return html;
+}
+function toggleAcc(cat){
+  var body=document.getElementById('body-'+cat);
+  var arrow=document.getElementById('arr-'+cat);
+  if(!body)return;
+  var open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(arrow)arrow.textContent=open?'▶':'▼';
 }
 function addCategory(){
   var name=v('new-cat-name').trim().toUpperCase();
-  if(!name)return;
+  if(!name){alert('Wpisz nazwę kategorii.');return;}
   var m=getMatrix();
-  if(m[name]){alert('Kategoria już istnieje.');return;}
+  if(m[name]){alert('Kategoria "'+name+'" już istnieje.');return;}
   m[name]=[];saveMatrix(m);showView('matryca');
 }
 function delCategory(cat){
-  if(!confirm('Usunąć kategorię '+cat+'?'))return;
-  var m=getMatrix();delete m[cat];saveMatrix(m);showView('matryca');
+  var m=getMatrix();
+  var cnt=(m[cat]||[]).length;
+  if(!confirm('Usunąć kategorię "'+cat+'"'+(cnt?' ('+cnt+' pozycji)':'')+'?\nNie można cofnąć.'))return;
+  delete m[cat];saveMatrix(m);showView('matryca');
 }
 function addMatrixItem(cat){
   var code=v('new-item-code-'+cat).trim();
   var desc=v('new-item-desc-'+cat).trim();
-  if(!code)return;
+  if(!code){alert('Wpisz kod lub nazwę.');return;}
   var m=getMatrix();
   m[cat]=m[cat]||[];
+  if(m[cat].some(function(x){return x.code===code;})){alert('"'+code+'" już istnieje w tej kategorii.');return;}
   m[cat].push({code:code,desc:desc});
   saveMatrix(m);showView('matryca');
+  setTimeout(function(){toggleAcc(cat);},60);
 }
 function delMatrixItem(cat,idx){
   var m=getMatrix();
+  var item=m[cat][idx];
+  if(!confirm('Usunąć "'+item.code+(item.desc?' – '+item.desc:'')+'"?'))return;
   m[cat].splice(idx,1);saveMatrix(m);showView('matryca');
+  setTimeout(function(){toggleAcc(cat);},60);
+}
+function editMatrixItem(cat,idx){
+  var m=getMatrix();
+  var item=m[cat][idx];
+  var newCode=prompt('Kod / Nazwa:',item.code);
+  if(newCode===null)return;
+  newCode=newCode.trim();
+  if(!newCode){alert('Kod nie może być pusty.');return;}
+  var newDesc=prompt('Opis:',item.desc||'');
+  if(newDesc===null)return;
+  m[cat][idx]={code:newCode,desc:newDesc.trim()};
+  saveMatrix(m);showView('matryca');
+  setTimeout(function(){toggleAcc(cat);},60);
 }
 
 // ── EKSPORT / IMPORT XLSX ────────────────────────────────────────────────────
@@ -1181,6 +1281,17 @@ if(isLoggedIn()){
   setTimeout(function(){document.getElementById('login-pwd').focus();},100);
 }
 if(fromUrl)alert('Dane wczytane z linku i zapisane lokalnie.');
+
+function getStatusKOptions(sel){
+  var m=getMatrix();var items=m.STATUS_K||[];
+  var cats=items.length?items.map(function(x){return x.code;}):['Zgloszone','Zatwierdzone','W trakcie','Wdrozone','Odrzucone'];
+  return cats.map(function(ct){return '<option'+(ct===sel?' selected':'')+'>'+ct+'</option>';}).join('');
+}
+function getStatusZOptions(sel){
+  var m=getMatrix();var items=m.STATUS_Z||[];
+  var cats=items.length?items.map(function(x){return x.code;}):['Do zrobienia','W trakcie','Gotowe','Zablokowane','Anulowane'];
+  return cats.map(function(ct){return '<option'+(ct===sel?' selected':'')+'>'+ct+'</option>';}).join('');
+}
 </script>
 </body>
 </html>
