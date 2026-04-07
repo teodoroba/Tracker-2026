@@ -611,7 +611,7 @@ function saveEditO(id){
 
 // ── ZADANIA LISTA ─────────────────────────────────────────────────────────────
 function buildZadaniaLista(){
-  var d=ld(KZ).sort(function(a,b){var pm={Wysoki:0,Sredni:1,Niski:2};return(pm[a.pr]||1)-(pm[b.pr]||1);});
+  var d=ld(KZ).sort(function(a,b){return(b.da||'').localeCompare(a.da||'');});
   var now=today();
   var rows=d.length?d.map(function(r){
     var over=r.ter&&r.ter<now&&r.s!=='Gotowe'&&r.s!=='Anulowane';
@@ -694,7 +694,7 @@ function saveEditZ(id){
 
 // ── CELE ROCZNE ───────────────────────────────────────────────────────────────
 function buildCeleLista(){
-  var d=ld(KCE);
+  var d=ld(KCE).sort(function(a,b){return(b.id||0)-(a.id||0);});
   var rows=d.length?d.map(function(r){
     var pct=r.typ==='%'?(+r.real||0):(r.cel>0?Math.min(100,Math.round((+r.real||0)/(+r.cel)*100)):0);
     var barColor=pct>=100?'#2e7d32':pct>=70?'#e65100':'#c62828';
@@ -1086,17 +1086,37 @@ function copySyncUrl(){
   catch(e){document.execCommand('copy');flash('copy-msg');}
 }
 function toggleSync(){
-  var p=document.getElementById('sync-panel');var vis=p.style.display!=='none';
-  p.style.display=vis?'none':'block';if(!vis)generateSyncUrl();
+  var p=document.getElementById('sync-panel');
+  var vis=p.style.display!=='none';
+  p.style.display=vis?'none':'block';
+  // Pokaż przycisk Dashboard gdy panel sync jest widoczny
+  var b=document.getElementById('dash-btn');
+  if(b) b.style.display=vis?'none':'';
+  if(!vis) generateSyncUrl();
 }
+
+function mergeArr(existing, incoming, keyField){
+  // Scala dwie tablice po polu keyField (id) – incoming nadpisuje istniejące, nowe są dodawane
+  var map={};
+  existing.forEach(function(r){map[r[keyField]]=r;});
+  incoming.forEach(function(r){map[r[keyField]]=r;}); // incoming wygrywa przy konflikcie
+  var out=[];Object.keys(map).forEach(function(k){out.push(map[k]);});return out.sort(function(a,b){return(b[keyField]||0)-(a[keyField]||0);});
+}
+
 function loadFromUrl(){
-  var params=new URLSearchParams(window.location.search);var d=params.get('d');if(!d)return false;
+  var params=new URLSearchParams(window.location.search);
+  var d=params.get('d');
+  if(!d)return false;
   try{
     var data=JSON.parse(decodeURIComponent(escape(atob(d))));
-    if(data.k)sv(KK,data.k);if(data.o)sv(KO,data.o);if(data.z)sv(KZ,data.z);
-    if(data.c)localStorage.setItem(KC,JSON.stringify(data.c));
-    if(data.ce)sv(KCE,data.ce);
-    if(window.history&&window.history.replaceState)window.history.replaceState({},'',window.location.pathname);
+    // SCALANIE: łączy dane z linku z lokalnymi, nie nadpisuje
+    if(data.k){sv(KK,mergeArr(ld(KK),data.k,'id'));}
+    if(data.o){sv(KO,mergeArr(ld(KO),data.o,'id'));}
+    if(data.z){sv(KZ,mergeArr(ld(KZ),data.z,'id'));}
+    if(data.ce){sv(KCE,mergeArr(ld(KCE),data.ce,'id'));}
+    if(data.c) localStorage.setItem(KC,JSON.stringify(data.c));
+    if(window.history&&window.history.replaceState)
+      window.history.replaceState({},'',window.location.pathname);
     return true;
   }catch(e){return false;}
 }
