@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tracker 2026 – Teodor</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;background:#f0f2f5;color:#1a1a1a}
+.topbar{background:#1F4E79;color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.topbar h1{font-size:20px;font-weight:800;margin-bottom:2px}
+.topbar .sub{font-size:12px;color:#B5D4F4}
+.sync-area{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn-top{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff}
+.btn-top:hover{background:rgba(255,255,255,0.28)}
+.main{padding:20px 24px}
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.dash-card{border-radius:12px;padding:16px 18px;color:#fff}
+.dash-card.blue{background:linear-gradient(135deg,#1a56db,#1F4E79)}
+.dash-card.green{background:linear-gradient(135deg,#2e7d32,#1b5e20)}
+.dash-card.purple{background:linear-gradient(135deg,#6a1b9a,#4a148c)}
+.dash-card.orange{background:linear-gradient(135deg,#e65100,#bf360c)}
+.dash-card.teal{background:linear-gradient(135deg,#00695c,#004d40)}
+.dash-card.navy{background:linear-gradient(135deg,#1F4E79,#0d2b45)}
+.dc-title{font-size:22px;font-weight:800;text-transform:uppercase;margin-bottom:8px;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+.dc-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.dc-nums{flex:1}
+.dc-main{font-size:28px;font-weight:700;line-height:1;margin-bottom:2px}
+.dc-sub{font-size:12px;opacity:.75}
+.dc-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.dc-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.18);color:#fff;white-space:nowrap}
+.dc-btn:hover{background:rgba(255,255,255,0.32)}
+.dc-pills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.dc-pill{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.18);color:#fff}
+.dc-pill.warn{background:rgba(255,200,0,0.35)}
+.dc-pill.danger{background:rgba(255,80,80,0.35)}
+.dc-pill.ok{background:rgba(100,255,150,0.25)}
+.pbar-wrap{margin-top:8px;height:5px;background:rgba(255,255,255,0.2);border-radius:3px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;background:rgba(255,255,255,0.7);transition:width .3s}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.ct{font-size:15px;font-weight:700;margin-bottom:14px}
+.fr{display:grid;gap:10px;margin-bottom:10px}
+.fr.c2{grid-template-columns:repeat(2,1fr)}
+.fr.c3{grid-template-columns:repeat(3,1fr)}
+.fr.c4{grid-template-columns:repeat(4,1fr)}
+label{display:block;font-size:12px;color:#555;margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial,sans-serif}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1a56db}
+textarea{height:60px;resize:vertical}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ccc;background:#fff;color:#333}
+.btn:hover{background:#f0f0f0}
+.btn.bl{background:#1a56db;border-color:#1a56db;color:#fff}
+.btn.bg2{background:#2e7d32;border-color:#2e7d32;color:#fff}
+.btn.bp{background:#6a1b9a;border-color:#6a1b9a;color:#fff}
+.btn.bo{background:#e65100;border-color:#e65100;color:#fff}
+.btn.bn{background:#1F4E79;border-color:#1F4E79;color:#fff}
+.btn.bd{background:#fff0f0;border-color:#ffaaaa;color:#c62828;padding:3px 9px;font-size:12px}
+.btn-edit{padding:3px 9px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #b5d4f4;background:#e8f3fb;color:#1a56db;margin-right:4px}
+.btn-edit:hover{background:#cce3f5}
+.btn-row{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.msg{font-size:13px;font-weight:700}
+.msg.g{color:#2e7d32}.msg.b{color:#1a56db}.msg.p{color:#6a1b9a}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:#1F4E79;color:#fff;border:none}
+.back-btn:hover{background:#163a5c}
+.back-bar{background:#dde3eb;padding:8px 24px;margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-weight:700;font-size:12px;color:#555;border-bottom:2px solid #e0e0e0;background:#fafafa;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tr:hover td{background:#f9fafb}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.bg-g{background:#e8f5e9;color:#2e7d32}.bg-a{background:#fff3e0;color:#e65100}
+.bg-r{background:#ffebee;color:#c62828}.bg-gr{background:#f5f5f5;color:#555}
+.bg-b{background:#e3f2fd;color:#1565c0}.bg-p{background:#f3e5f5;color:#6a1b9a}
+.pln{font-weight:700;color:#2e7d32}
+.empty{text-align:center;padding:28px;color:#999;font-size:13px}
+.tbl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.frow select{width:auto;font-size:13px}
+.sync-box{background:#E8F4FD;border:1px solid #B5D4F4;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+.sync-box h3{font-size:13px;font-weight:700;color:#1F4E79;margin-bottom:6px}
+.sync-box p{font-size:12px;color:#555;margin-bottom:8px}
+.sync-url{width:100%;padding:6px 10px;font-size:12px;font-family:monospace;border:1px solid #ccc;border-radius:6px}
+.warn-box{background:#FFF3E0;border:1px solid #FFCC80;border-radius:6px;padding:8px 12px;font-size:12px;color:#e65100;margin-bottom:8px}
+.days-ok{color:#2e7d32;font-weight:700}
+.days-warn{color:#e65100;font-weight:700}
+.days-over{color:#c62828;font-weight:700}
+/* Matryca kategorii */
+.matrix-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+.matrix-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px 16px}
+.matrix-card h3{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.matrix-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.matrix-item:last-child{border-bottom:none}
+.matrix-item .code{font-weight:700;min-width:80px;color:#1F4E79;font-size:12px}
+.matrix-item .desc{flex:1;color:#333}
+.matrix-del{background:none;border:none;cursor:pointer;color:#c62828;font-size:16px;padding:0 4px}
+/* Wykresy – kompaktowe */
+.bi-header{background:linear-gradient(135deg,#1F4E79,#0d2b45);color:#fff;border-radius:10px;padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.bi-header h2{font-size:18px;font-weight:800;letter-spacing:.3px}
+.bi-header .bi-sub{font-size:12px;opacity:.7;margin-top:2px}
+.bi-kpis{display:flex;gap:20px}
+.bi-kpi{text-align:center}
+.bi-kpi .val{font-size:22px;font-weight:800}
+.bi-kpi .lbl{font-size:11px;opacity:.7}
+.charts-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+.charts-grid.two{grid-template-columns:repeat(2,1fr)}
+.charts-grid.three{grid-template-columns:repeat(3,1fr)}
+.chart-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px 12px;cursor:pointer;transition:box-shadow .15s;position:relative}
+.chart-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.chart-card h3{font-size:13px;font-weight:700;color:#1F4E79;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.chart-card h3 .zoom-icon{font-size:11px;color:#aaa;font-weight:400}
+.chart-card canvas{max-height:140px}
+/* Modal powiększenie */
+.ch-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
+.ch-modal.open{display:flex}
+.ch-modal-box{background:#fff;border-radius:14px;padding:24px;width:min(700px,92vw);max-height:88vh;overflow:auto;position:relative}
+.ch-modal-title{font-size:17px;font-weight:700;color:#1F4E79;margin-bottom:16px}
+.ch-modal-close{position:absolute;top:14px;right:18px;font-size:20px;cursor:pointer;color:#666;background:none;border:none;font-weight:700}
+.ch-modal-close:hover{color:#c62828}
+/* Opis – szerokie kolumny */
+td.desc-col{min-width:240px;max-width:380px;white-space:normal;font-size:13px}
+td.desc-sm{min-width:180px;max-width:280px;white-space:normal;font-size:13px}
+/* Ekran logowania */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1F4E79 0%,#0d2b45 100%);display:flex;align-items:center;justify-content:center;z-index:99999}
+.login-box{background:#fff;border-radius:16px;padding:36px 40px;width:min(380px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.login-logo{font-size:40px;margin-bottom:8px}
+.login-title{font-size:20px;font-weight:800;color:#1F4E79;margin-bottom:4px}
+.login-sub{font-size:13px;color:#888;margin-bottom:28px}
+.login-input{width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;font-family:Arial,sans-serif;text-align:center;letter-spacing:2px;margin-bottom:12px;transition:border-color .2s}
+.login-input:focus{outline:none;border-color:#1a56db}
+.login-btn{width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#1a56db,#1F4E79);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:opacity .2s}
+.login-btn:hover{opacity:.9}
+.login-err{color:#c62828;font-size:13px;font-weight:600;min-height:18px;margin-bottom:8px}
+.login-hint{font-size:11px;color:#bbb;margin-top:12px}
+.login-change{font-size:12px;color:#1a56db;cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block}
+</style>
+</head>
+<body>
+
+<!-- EKRAN LOGOWANIA -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🔒</div>
+    <div class="login-title">Tracker 2026 – Teodor</div>
+    <div class="login-sub">Brenntag · Produkcja KP · Dostęp chroniony</div>
+    <input class="login-input" type="password" id="login-pwd" placeholder="Wpisz hasło" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="doLogin()">Zaloguj →</button>
+    <div class="login-hint">Sesja aktywna przez 8 godzin od zalogowania</div>
+    <div><span class="login-change" onclick="showChangePass()">Zmień hasło</span></div>
+  </div>
+</div>
+
+<!-- MODAL WYKRESU -->
+<div id="ch-modal" class="ch-modal" onclick="closeChModal(event)">
+  <div class="ch-modal-box">
+    <button class="ch-modal-close" onclick="closeChModal()">✕</button>
+    <div class="ch-modal-title" id="ch-modal-title"></div>
+    <canvas id="ch-modal-canvas" style="max-height:420px"></canvas>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div>
+      <div class="topbar h1">Tracker 2026 – Teodor</div>
+      <div class="sub">Brenntag &nbsp;·&nbsp; Produkcja KP</div>
+    </div>
+    <button id="dash-btn" onclick="showDash()" style="display:none;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.18);color:#fff;white-space:nowrap">← Dashboard</button>
+  </div>
+  <div class="sync-area">
+    <button class="btn-top" onclick="showView('matryca')">⚙ Matryca kategorii</button>
+    <button class="btn-top" onclick="exportXLSX()">⬇ Eksport XLSX</button>
+    <label class="btn-top" style="cursor:pointer">⬆ Import XLSX<input type="file" accept=".xlsx,.xls" onchange="importXLSX(event)" style="display:none"></label>
+    <button class="btn-top" onclick="toggleSync()">🔗 Link/Sync</button>
+    <button class="btn-top" style="background:rgba(198,40,40,.35);border-color:rgba(198,40,40,.5)" onclick="logout()">⏻ Wyloguj</button>
+  </div>
+</div>
+
+<div class="main">
+<div id="sync-panel" style="display:none">
+  <div class="sync-box">
+    <h3>Synchronizacja przez URL</h3>
+    <p>Dane zakodowane w linku – otwórz na innym urządzeniu, dane wczytają się automatycznie.</p>
+    <div class="warn-box">⚠ Jeśli sieć korporacyjna blokuje długie URL – użyj eksportu XLSX i prześlij mailem.</div>
+    <textarea class="sync-url" id="sync-url-box" rows="3" readonly></textarea>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn bl" onclick="copySyncUrl()">Kopiuj link</button>
+      <button class="btn" onclick="generateSyncUrl()">Odśwież</button>
+      <span id="copy-msg" class="msg g" style="display:none">Skopiowano!</span>
+    </div>
+  </div>
+</div>
+<div id="view-dashboard"><div class="dash-grid" id="dash-grid"></div></div>
+<div id="view-content" style="display:none">
+  <div id="content-area" style="padding:16px 24px 16px"></div>
+</div>
+</div>
+
+<script>
+var KK='t26k',KO='t26o',KZ='t26z',KC='t26c',KCE='t26ce',KMX='t26mx';
+function ld(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch(e){return[];}}
+function sv(k,d){localStorage.setItem(k,JSON.stringify(d));}
+function ldc(){try{return JSON.parse(localStorage.getItem(KC))||{c:0,k:0,o:0};}catch(e){return{c:0,k:0,o:0};}}
+function today(){return new Date().toISOString().split('T')[0];}
+function thisMonth(){return today().substring(0,7);}
+function fmt(n){return Math.round(n).toLocaleString('pl-PL');}
+function flash(id){var e=document.getElementById(id);if(e){e.style.display='inline';setTimeout(function(){e.style.display='none';},2000);}}
+function v(id){var e=document.getElementById(id);return e?e.value:'';}
+function daysLeft(ter){
+  if(!ter)return null;
+  var diff=Math.round((new Date(ter)-new Date(today()))/(1000*60*60*24));
+  return diff;
+}
+function daysHtml(ter,status){
+  if(status==='Gotowe'||status==='Anulowane')return '<span class="days-ok">✓</span>';
+  var d=daysLeft(ter);
+  if(d===null)return '—';
+  if(d<0)return '<span class="days-over">'+d+' dni</span>';
+  if(d<=3)return '<span class="days-warn">'+d+' dni</span>';
+  return '<span class="days-ok">'+d+' dni</span>';
+}
+
+// BADGES
+function kBdg(s){var m={Zgloszone:'bg-gr',Zatwierdzone:'bg-b','W trakcie':'bg-a',Wdrozone:'bg-g',Odrzucone:'bg-r'};return '<span class="badge '+(m[s]||'bg-gr')+'">'+s+'</span>';}
+function oBdg(s){var m={Tak:'bg-r',Moze:'bg-a',Nie:'bg-g'};return '<span class="badge '+(m[s]||'bg-gr')+'">'+s+'</span>';}
+function zBdg(s){var m={'Do zrobienia':'bg-gr','W trakcie':'bg-b',Gotowe:'bg-g',Zablokowane:'bg-r',Anulowane:'bg-gr'};return '<span class="badge '+(m[s]||'bg-gr')+'">'+s+'</span>';}
+function pBdg(s){var m={Wysoki:'bg-r',Sredni:'bg-a',Niski:'bg-g'};return '<span class="badge '+(m[s]||'bg-gr')+'">'+s+'</span>';}
+
+// ── MATRYCA KATEGORII ────────────────────────────────────────────────────────
+var DEFAULT_MATRIX={
+  MASZYNA:[
+    {code:'FM-2000',desc:'Mieszalnik FM 2000'},{code:'FM-600',desc:'Mieszalnik FM 600'},
+    {code:'FM-130',desc:'Mieszalnik FM 130'},{code:'PM-1',desc:'Pakowaczka PM 1'},
+    {code:'PM-2',desc:'Pakowaczka PM 2'},{code:'PM-3',desc:'Pakowaczka PM 3'},
+    {code:'PM-4',desc:'Pakowaczka PM 4'},{code:'PM-5',desc:'Pakowaczka PM 5'},
+    {code:'DET-1',desc:'Detektor metalu Mettler Toledo'},{code:'DET-2',desc:'Detektor metalu'},
+    {code:'TR-1',desc:'Przenośnik rurowy'},{code:'ZB-1',desc:'Zbiornik na kurz'},
+    {code:'M-1',desc:'Mieszalnik WYSOCKI'},{code:'KON-1',desc:'Kontener 1'},
+    {code:'KON-2',desc:'Kontener 2'},{code:'KON-3',desc:'Kontener 3'},
+    {code:'KON-4',desc:'Kontener 4'},{code:'PW-1',desc:'Pochłaniacz wilgoci'},
+    {code:'PW-2',desc:'Pochłaniacz wilgoci'},{code:'CIP',desc:'Stacja mycia'},
+    {code:'ODK',desc:'Odkurzacz Colynco'},{code:'VN-1',desc:'Linia rozlewu VN-1'},
+    {code:'VN-2',desc:'Linia rozlewu VN-2'},{code:'VN-3',desc:'Linia rozlewu VN-3'},
+    {code:'VN-4',desc:'Linia rozlewu VN-4'},{code:'P1100',desc:'Pompa P1100'},
+    {code:'P1200',desc:'Pompa 1200'},{code:'STR-AKC',desc:'Stacja rozlewu akcyza powierzone'},
+    {code:'STR-KW',desc:'Stacja rozlewu kwasów'},{code:'STR-BRE',desc:'Stacja rozlewu BrenntaPlus'},
+    {code:'STR-WIA',desc:'Wiata niebieska'},{code:'T-800',desc:'Mieszalnik T-800'},
+    {code:'T-850',desc:'Mieszalnik T-850'},{code:'T-900',desc:'Mieszalnik T-900'},
+    {code:'T-950',desc:'Mieszalnik T-950'},{code:'T-1800',desc:'Mieszalnik T-1800'},
+    {code:'T-1900',desc:'Mieszalnik T-1900'},{code:'KOM-H',desc:'Kompresory Haffner'},
+    {code:'KOM-K',desc:'Kompresory Keaser'},{code:'KLIM',desc:'Komora klimatyczna'},
+    {code:'AGR',desc:'Agregaty myjące'}
+  ],
+  OBSZAR:[
+    {code:'P1',desc:'Linia P1 – Płyny spożywcze'},{code:'P2',desc:'Linia P2 – Sypkie'},
+    {code:'P3',desc:'Linia P3 – Chemia przemysłowa'},{code:'MAG',desc:'Magazyn'},
+    {code:'LAB',desc:'Laboratorium'},{code:'BHP',desc:'Strefa BHP'},
+    {code:'ADM',desc:'Administracja'},{code:'EXT',desc:'Zewnętrzny'}
+  ]
+};
+
+function getMatrix(){
+  try{var m=JSON.parse(localStorage.getItem(KMX));return m&&m.MASZYNA?m:JSON.parse(JSON.stringify(DEFAULT_MATRIX));}
+  catch(e){return JSON.parse(JSON.stringify(DEFAULT_MATRIX));}
+}
+function saveMatrix(m){localStorage.setItem(KMX,JSON.stringify(m));}
+function getMaszynaOptions(){
+  var m=getMatrix();
+  return (m.MASZYNA||[]).map(function(x){return '<option value="'+x.code+'">'+x.code+' – '+x.desc+'</option>';}).join('');
+}
+function getObszarOptions(){
+  var m=getMatrix();
+  return (m.OBSZAR||[]).map(function(x){return '<option value="'+x.code+'">'+x.code+' – '+x.desc+'</option>';}).join('');
+}
+function getMatrixCatOptions(catKey, sel){
+  // Returns options from any matrix category by key name
+  var m=getMatrix();
+  var items=m[catKey]||[];
+  if(!items.length) return '<option value="">— brak pozycji w matrycy —</option>';
+  return items.map(function(x){
+    var v2=x.code; var lbl=x.code+(x.desc?' – '+x.desc:'');
+    return '<option value="'+v2+'"'+(v2===sel?' selected':'')+'>'+lbl+'</option>';
+  }).join('');
+}
+function getAllMatrixCatKeys(){
+  // Returns all category names defined in matrix (excluding MASZYNA and OBSZAR)
+  var m=getMatrix();
+  return Object.keys(m).filter(function(k){return k!=='MASZYNA'&&k!=='OBSZAR';});
+}
+function getObsKatOptions(sel){
+  // Obs categories: fixed list + any extra matrix categories
+  var cats=['SAFETY','MASZYNY','QUALITY','GHP/GMP','LUDZIE','PROCESY','Inne'];
+  // Add any custom matrix cats
+  getAllMatrixCatKeys().forEach(function(k){if(cats.indexOf(k)<0)cats.push(k);});
+  return cats.map(function(c){return '<option'+(c===sel?' selected':'')+'>'+c+'</option>';}).join('');
+}
+function getZadCatOptions(sel){
+  // Zadania categories: fixed defaults + all matrix category keys
+  var fixed=['Kaizen/CI','BHP','Jakosc','Maszyny/UR','Zespol/HR','Procesy','Dokumentacja','Raportowanie','Inne'];
+  getAllMatrixCatKeys().forEach(function(k){if(fixed.indexOf(k)<0)fixed.push(k);});
+  return fixed.map(function(c){return '<option'+(c===sel?' selected':'')+'>'+c+'</option>';}).join('');
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDash(){
+  var dk=ld(KK),doo=ld(KO),dz=ld(KZ),c=ldc(),dce=ld(KCE);
+  var est=dk.reduce(function(a,r){return a+(+r.e||0);},0);
+  var zwr=dk.reduce(function(a,r){return a+(+r.z||0);},0);
+  var wdr=dk.filter(function(r){return r.s==='Wdrozone';}).length;
+  var inProg=dk.filter(function(r){return r.s==='W trakcie';}).length;
+  var obsM=doo.filter(function(r){return(r.d||'').substring(0,7)===thisMonth();}).length;
+  var obsK=doo.filter(function(r){return r.k==='Tak';}).length;
+  var zOpen=dz.filter(function(r){return r.s==='Do zrobienia';}).length;
+  var zW=dz.filter(function(r){return r.s==='W trakcie';}).length;
+  var zOver=dz.filter(function(r){return r.ter&&r.ter<today()&&r.s!=='Gotowe'&&r.s!=='Anulowane';}).length;
+  var pk=c.k>0?Math.min(100,Math.round(dk.length/c.k*100)):0;
+  var pp=c.c>0?Math.min(100,Math.round(zwr/c.c*100)):0;
+  var po=c.o>0?Math.min(100,Math.round(obsM/c.o*100)):0;
+  var ceOk=dce.filter(function(r){return +r.real>=+r.cel;}).length;
+
+  var cards=[
+    {color:'purple',title:'ZADANIA',
+     main:zOpen+zW,sub:'otwarte · do zrobienia: '+zOpen,
+     pills:[{t:'W trakcie: '+zW,cls:zW>0?'warn':''},{t:zOver>0?'PO TERMINIE: '+zOver:'Terminy OK',cls:zOver>0?'danger':'ok'}],
+     pbar:dz.length>0?Math.round(dz.filter(function(r){return r.s==='Gotowe';}).length/dz.length*100):0,
+     pbar_lbl:'Ukończone: '+dz.filter(function(r){return r.s==='Gotowe';}).length+'/'+dz.length,
+     btns:[{t:'Lista',fn:"showView('zadania-lista')"},{t:'+ Dodaj',fn:"showView('zadania-dodaj')"}],extra:''},
+    {color:'green',title:'OBSERWACJE',
+     main:doo.length,sub:'łącznie · m-c: '+obsM,
+     pills:[{t:'→ Kaizen: '+obsK,cls:obsK>0?'warn':''},{t:'M-c: '+po+'%',cls:po>=80?'ok':po>=50?'warn':'danger'}],
+     pbar:po,pbar_lbl:'Cel m-c: '+obsM+'/'+(c.o||'—'),
+     btns:[{t:'Lista',fn:"showView('obs-lista')"},{t:'+ Dodaj',fn:"showView('obs-dodaj')"}],
+     extra:'<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px;background:rgba(198,40,40,.5)" onclick="showView(\'obs-lista\',\'SAFETY\')">SAFETY</button>'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px;background:rgba(230,81,0,.4)" onclick="showView(\'obs-lista\',\'MASZYNY\')">MASZYNY</button>'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px;background:rgba(230,81,0,.4)" onclick="showView(\'obs-lista\',\'QUALITY\')">QUALITY</button>'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px;background:rgba(100,150,255,.4)" onclick="showView(\'obs-lista\',\'GHP/GMP\')">GHP/GMP</button>'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px" onclick="showView(\'obs-lista\',\'LUDZIE\')">LUDZIE</button>'
+       +'<button class="dc-btn" style="font-size:11px;padding:2px 8px" onclick="showView(\'obs-lista\',\'PROCESY\')">PROCESY</button>'
+       +'</div>'},
+    {color:'blue',title:'KAIZEN',
+     main:dk.length,sub:'łącznie · wdrożone: '+wdr,
+     pills:[{t:'W trakcie: '+inProg,cls:inProg>0?'warn':''},{t:'Zgłoszone: '+dk.filter(function(r){return r.s==='Zgloszone';}).length,cls:''}],
+     pbar:pk,pbar_lbl:'Cel: '+pk+'% ('+dk.length+'/'+(c.k||'—')+')',
+     btns:[{t:'Lista',fn:"showView('kaizen-lista')"},{t:'+ Dodaj',fn:"showView('kaizen-dodaj')"}],extra:''},
+    {color:'orange',title:'CELE ROCZNE',
+     main:ceOk+'/'+dce.length,sub:'osiągniętych celów',
+     pills:[{t:'Kaizen: '+pk+'%',cls:pk>=80?'ok':pk>=50?'warn':'danger'},{t:'Obs/m-c: '+po+'%',cls:po>=80?'ok':po>=50?'warn':'danger'}],
+     pbar:dce.length>0?Math.round(ceOk/dce.length*100):0,pbar_lbl:'',
+     btns:[{t:'Lista',fn:"showView('cele-lista')"},{t:'+ Dodaj',fn:"showView('cele-dodaj')"}],extra:''},
+    {color:'teal',title:'OSZCZĘDNOŚCI',
+     main:fmt(est)+' PLN',sub:'estymowane rocznie',
+     pills:[{t:'Zwerif: '+fmt(zwr)+' PLN',cls:'ok'},{t:'Realizacja: '+pp+'%',cls:pp>=80?'ok':pp>=50?'warn':'danger'}],
+     pbar:pp,pbar_lbl:'Cel: '+fmt(c.c||0)+' PLN/rok',
+     btns:[{t:'Lista',fn:"showView('kaizen-lista')"},{t:'+ Dodaj',fn:"showView('kaizen-dodaj')"}],extra:''},
+    {color:'navy',title:'PODSUMOWANIE',
+     main:dk.length+doo.length+dz.length,sub:'wpisów łącznie',
+     pills:[{t:'Kaizen: '+dk.length,cls:''},{t:'Obs: '+doo.length,cls:''},{t:'Zadania: '+dz.length,cls:''}],
+     pbar:0,pbar_lbl:'',
+     btns:[{t:'Wykresy',fn:"showView('podsumowanie')"},{t:'Eksport',fn:'exportXLSX()'}],extra:''}
+  ];
+
+  var html='';
+  cards.forEach(function(card){
+    html+='<div class="dash-card '+card.color+'"><div class="dc-title">'+card.title+'</div>';
+    html+='<div class="dc-row"><div class="dc-nums"><div class="dc-main">'+card.main+'</div><div class="dc-sub">'+card.sub+'</div></div>';
+    html+='<div class="dc-btns">';
+    card.btns.forEach(function(b){html+='<button class="dc-btn" onclick="'+b.fn+'">'+b.t+'</button>';});
+    html+='</div></div><div class="dc-pills">';
+    card.pills.forEach(function(p){html+='<span class="dc-pill '+p.cls+'">'+p.t+'</span>';});
+    html+='</div>'+card.extra;
+    if(card.pbar_lbl){html+='<div style="font-size:11px;opacity:.7;margin-top:6px">'+card.pbar_lbl+'</div>';}
+    if(card.pbar>0||card.pbar_lbl){html+='<div class="pbar-wrap"><div class="pbar-fill" style="width:'+Math.min(100,card.pbar)+'%"></div></div>';}
+    html+='</div>';
+  });
+  document.getElementById('dash-grid').innerHTML=html;
+}
+
+function hideSync(){document.getElementById('sync-panel').style.display='none';}
+function showDash(){
+  hideSync();
+  document.getElementById('view-dashboard').style.display='';
+  document.getElementById('view-content').style.display='none';
+  var b=document.getElementById('dash-btn');if(b)b.style.display='none';
+  renderDash();
+}
+function showView(view,filter){
+  hideSync();
+  document.getElementById('view-dashboard').style.display='none';
+  document.getElementById('view-content').style.display='';
+  var b=document.getElementById('dash-btn');if(b)b.style.display='';
+  var area=document.getElementById('content-area');
+  if(view==='kaizen-lista')area.innerHTML=buildKaizenLista();
+  else if(view==='kaizen-dodaj')area.innerHTML=buildKaizenDodaj();
+  else if(view==='obs-lista')area.innerHTML=buildObsLista(filter||'');
+  else if(view==='obs-dodaj')area.innerHTML=buildObsDodaj();
+  else if(view==='zadania-lista')area.innerHTML=buildZadaniaLista();
+  else if(view==='zadania-dodaj')area.innerHTML=buildZadaniaDodaj();
+  else if(view==='cele-lista')area.innerHTML=buildCeleLista();
+  else if(view==='cele-dodaj')area.innerHTML=buildCeleDodaj();
+  else if(view==='podsumowanie'){area.innerHTML=buildPodsumowanie();setTimeout(function(){renderCharts();},100);}
+  else if(view==='matryca')area.innerHTML=buildMatryca();
+}
+
+// ── KAIZEN LISTA ─────────────────────────────────────────────────────────────
+function buildKaizenLista(){
+  var d=ld(KK).sort(function(a,b){return(b.da||'').localeCompare(a.da||'');});
+  var rows=d.length?d.map(function(r){
+    return '<tr><td style="white-space:nowrap;font-size:12px">'+r.da+'</td>'
+      +'<td class="desc-col">'+r.p+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.l+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.masz+'</td>'
+      +'<td class="pln" style="white-space:nowrap">'+(r.e?fmt(r.e)+' PLN':'—')+'</td>'
+      +'<td class="pln" style="white-space:nowrap">'+(r.z?fmt(r.z)+' PLN':'—')+'</td>'
+      +'<td style="font-size:12px;white-space:nowrap">'+r.o+'</td>'
+      +'<td>'+kBdg(r.s)+'</td>'
+      +'<td style="font-weight:700;white-space:nowrap;font-size:12px;color:#1F4E79">'+r.n+'</td>'
+      +'<td style="white-space:nowrap">'
+      +'<button class="btn-edit" onclick="editK('+r.id+')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delK('+r.id+');showView(\'kaizen-lista\')">✕</button>'
+      +'</td></tr>';
+  }).join(''):'<tr><td colspan="10"><div class="empty">Brak wpisów.</div></td></tr>';
+  return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#1a56db">Lista Kaizen</span>'
+    +'<div class="frow"><select onchange="showView(\'kaizen-lista\')" id="kfs"><option value="">Wszystkie statusy</option><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select>'
+    +'<button class="btn bl" onclick="showView(\'kaizen-dodaj\')">+ Dodaj</button></div></div>'
+    +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Problem</th><th>Linia</th><th>Maszyna</th><th>Est. PLN</th><th>Zwerif. PLN</th><th>Odp.</th><th>Status</th><th>Nr</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function editK(id){
+  var r=ld(KK).find(function(x){return x.id===id;});
+  if(!r)return;
+  var mOpt=getMaszynaOptions(); var oOpt=getObszarOptions();
+  function sel(tag,val){return tag.replace('value="'+val+'"','value="'+val+'" selected').replace('>'+val+'<',' selected>'+val+'<');}
+  document.getElementById('content-area').innerHTML=
+    '<div class="card"><div class="ct" style="color:#1a56db">Edytuj Kaizen – '+r.n+'</div>'
+    +'<div class="fr c4"><div><label>Data zgłoszenia</label><input id="kda" type="date" value="'+r.da+'"></div>'
+    +'<div><label>Status</label><select id="kst"><option'+(r.s==='Zgloszone'?' selected':'')+'>Zgloszone</option><option'+(r.s==='Zatwierdzone'?' selected':'')+'>Zatwierdzone</option><option'+(r.s==='W trakcie'?' selected':'')+'>W trakcie</option><option'+(r.s==='Wdrozone'?' selected':'')+'>Wdrozone</option><option'+(r.s==='Odrzucone'?' selected':'')+'>Odrzucone</option></select></div>'
+    +'<div><label>Linia / obszar</label><select id="klin"><option value="">— wybierz —</option>'+oOpt+'<option value="Inne">Inne</option></select></div>'
+    +'<div><label>Maszyna</label><select id="kmasz"><option value="">— wybierz —</option>'+mOpt+'<option value="Inne">Inna</option></select></div></div>'
+    +'<div class="fr c3"><div><label>Zgłaszający</label><input id="kk" value="'+(r.k||'')+'"></div>'
+    +'<div><label>Typ Muda</label><select id="km"><option'+(r.m==='Oczekiwanie'?' selected':'')+'>Oczekiwanie</option><option'+(r.m==='Ruchy'?' selected':'')+'>Ruchy</option><option'+(r.m==='Braki/poprawki'?' selected':'')+'>Braki/poprawki</option><option'+(r.m==='Transport'?' selected':'')+'>Transport</option><option'+(r.m==='Zapasy'?' selected':'')+'>Zapasy</option><option'+(r.m==='Nadprodukcja'?' selected':'')+'>Nadprodukcja</option><option'+(r.m==='Nadmierne przetwarzanie'?' selected':'')+'>Nadmierne przetwarzanie</option><option'+(r.m==='Potencjal ludzi'?' selected':'')+'>Potencjal ludzi</option></select></div>'
+    +'<div><label>Nr Kaizen</label><input id="kn" value="'+(r.n||'')+'"></div></div>'
+    +'<div class="fr c2"><div><label>Opis problemu</label><textarea id="kp" style="height:70px">'+(r.p||'')+'</textarea></div>'
+    +'<div><label>Proponowane rozwiązanie</label><textarea id="kr" style="height:70px">'+(r.r||'')+'</textarea></div></div>'
+    +'<div class="fr c4"><div><label>Oszczędność estym. [PLN/rok]</label><input id="ke" type="number" value="'+(r.e||0)+'"></div>'
+    +'<div><label>Oszczędność zwerif. [PLN/rok]</label><input id="kz" type="number" value="'+(r.z||0)+'"></div>'
+    +'<div><label>Odpowiedzialny</label><input id="ko" value="'+(r.o||'')+'"></div>'
+    +'<div><label>Termin wdrożenia</label><input id="kt" type="date" value="'+(r.ter||'')+'"></div></div>'
+    +'<div class="btn-row"><button class="btn bl" onclick="saveEditK('+id+')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Anuluj</button>'
+    +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
+  // Set select values that need js
+  setTimeout(function(){
+    var el=document.getElementById('klin'); if(el&&r.l)el.value=r.l;
+    var em=document.getElementById('kmasz'); if(em&&r.masz)em.value=r.masz;
+  },50);
+}
+function saveEditK(id){
+  var dk=ld(KK);
+  var idx=dk.findIndex(function(x){return x.id===id;});
+  if(idx<0)return;
+  dk[idx]=Object.assign(dk[idx],{da:v('kda'),s:v('kst'),l:v('klin'),masz:v('kmasz'),
+    k:v('kk'),m:v('km'),n:v('kn'),p:v('kp'),r:v('kr'),
+    e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt')});
+  sv(KK,dk);flash('kmsg');renderDash();setTimeout(function(){showView('kaizen-lista');},600);
+}
+
+// ── KAIZEN DODAJ ─────────────────────────────────────────────────────────────
+function buildKaizenDodaj(){
+  var mOpt=getMaszynaOptions();
+  var oOpt=getObszarOptions();
+  return '<div class="card"><div class="ct" style="color:#1a56db">Nowy Kaizen</div>'
+    +'<div class="fr c4"><div><label>Data zgłoszenia</label><input id="kda" type="date" value="'+today()+'"></div>'
+    +'<div><label>Status</label><select id="kst"><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select></div>'
+    +'<div><label>Linia / obszar</label><select id="klin"><option value="">— wybierz —</option>'+oOpt+'<option value="Inne">Inne</option></select></div>'
+    +'<div><label>Maszyna</label><select id="kmasz"><option value="">— wybierz —</option>'+mOpt+'<option value="Inne">Inna</option></select></div></div>'
+    +'<div class="fr c3"><div><label>Zgłaszający</label><input id="kk" placeholder="Imię / stanowisko"></div>'
+    +'<div><label>Typ Muda</label><select id="km"><option>Oczekiwanie</option><option>Ruchy</option><option>Braki/poprawki</option><option>Transport</option><option>Zapasy</option><option>Nadprodukcja</option><option>Nadmierne przetwarzanie</option><option>Potencjal ludzi</option></select></div>'
+    +'<div><label>Nr Kaizen</label><input id="kn" placeholder="auto"></div></div>'
+    +'<div class="fr c2"><div><label>Opis problemu (fakty, liczby)</label><textarea id="kp" style="height:70px"></textarea></div>'
+    +'<div><label>Proponowane rozwiązanie</label><textarea id="kr" style="height:70px"></textarea></div></div>'
+    +'<div class="fr c4"><div><label>Oszczędność estym. [PLN/rok]</label><input id="ke" type="number" placeholder="0" min="0"></div>'
+    +'<div><label>Oszczędność zwerif. [PLN/rok]</label><input id="kz" type="number" placeholder="0" min="0"></div>'
+    +'<div><label>Odpowiedzialny</label><input id="ko" placeholder="Imię"></div>'
+    +'<div><label>Termin wdrożenia</label><input id="kt" type="date"></div></div>'
+    +'<div class="btn-row"><button class="btn bl" onclick="addK()">Zapisz</button>'
+    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Lista</button>'
+    +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
+}
+function addK(){
+  var d=ld(KK);
+  d.push({id:Date.now(),da:v('kda'),s:v('kst'),l:v('klin'),masz:v('kmasz'),
+    k:v('kk'),m:v('km'),n:v('kn')||('K-'+(d.length+1)),p:v('kp'),r:v('kr'),
+    e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt')});
+  sv(KK,d);flash('kmsg');renderDash();
+}
+function delK(id){if(!confirm('Usunąć?'))return;sv(KK,ld(KK).filter(function(r){return r.id!==id;}));renderDash();}
+
+// ── OBSERWACJE LISTA ──────────────────────────────────────────────────────────
+function buildObsLista(cf){
+  cf=cf||'';
+  var d=ld(KO).sort(function(a,b){return(b.d||'').localeCompare(a.d||'');});
+  if(cf)d=d.filter(function(r){return r.cat===cf;});
+  var catColors={SAFETY:'bg-r',MASZYNY:'bg-a',QUALITY:'bg-a','GHP/GMP':'bg-b'};
+  var rows=d.length?d.map(function(r){
+    return '<tr><td style="white-space:nowrap;font-size:12px">'+r.d+'</td>'
+      +'<td class="desc-col">'+r.f+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.lin+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.zm+'</td>'
+      +'<td class="desc-sm" style="color:#666;font-style:italic">'+r.i+'</td>'
+      +'<td>'+oBdg(r.k)+'</td>'
+      +'<td><span class="badge '+(catColors[r.cat]||'bg-gr')+'">'+r.cat+'</span></td>'
+      +'<td style="white-space:nowrap">'
+      +'<button class="btn-edit" onclick="editO('+r.id+')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delO('+r.id+');showView(\'obs-lista\',\''+cf+'\')">✕</button>'
+      +'</td></tr>';
+  }).join(''):'<tr><td colspan="8"><div class="empty">Brak obserwacji'+(cf?' – '+cf:'')+'.</div></td></tr>';
+  return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#2e7d32">Obserwacje'+(cf?' – '+cf:'')+'</span>'
+    +'<div class="frow"><select onchange="showView(\'obs-lista\',this.value)">'
+    +'<option value="">Wszystkie</option><option'+(cf==='SAFETY'?' selected':'')+'>SAFETY</option>'
+    +'<option'+(cf==='MASZYNY'?' selected':'')+'>MASZYNY</option><option'+(cf==='QUALITY'?' selected':'')+'>QUALITY</option>'
+    +'<option'+(cf==='GHP/GMP'?' selected':'')+'>GHP/GMP</option><option'+(cf==='LUDZIE'?' selected':'')+'>LUDZIE</option>'
+    +'<option'+(cf==='PROCESY'?' selected':'')+'>PROCESY</option><option'+(cf==='Inne'?' selected':'')+'>Inne</option></select>'
+    +'<button class="btn bg2" onclick="showView(\'obs-dodaj\')">+ Dodaj</button></div></div>'
+    +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Obserwacja</th><th>Linia</th><th>Zmiana</th><th>Interpretacja</th><th>Kaizen?</th><th>Kat.</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+// ── OBSERWACJE DODAJ ──────────────────────────────────────────────────────────
+function buildObsDodaj(){
+  var oOpt=getObszarOptions();
+  return '<div class="card"><div class="ct" style="color:#2e7d32">Nowa Obserwacja</div>'
+    +'<div class="fr c4"><div><label>Data</label><input id="oda" type="date" value="'+today()+'"></div>'
+    +'<div><label>Kategoria (z Matrycy)</label><select id="ocat">'+getObsKatOptions('')+'</select></div>'
+    +'<div><label>Linia / obszar</label><select id="olin"><option value="">— wybierz —</option>'+oOpt+'<option>Inne</option></select></div>'
+    +'<div><label>Zmiana</label><select id="ozm"><option>Zmiana 1</option><option>Zmiana 2</option><option>Zmiana 3</option></select></div></div>'
+    +'<div class="fr c2"><div><label>Co WIDZISZ? (fakty – nie opinie)</label><textarea id="of" style="height:70px"></textarea></div>'
+    +'<div><label>Interpretacja</label><textarea id="oi" style="height:70px"></textarea></div></div>'
+    +'<div class="fr c3"><div><label>Czy trafia do Kaizen?</label><select id="ok"><option>Moze</option><option>Tak</option><option>Nie</option></select></div>'
+    +'<div><label>Nr Kaizen</label><input id="okn" placeholder="K-003"></div>'
+    +'<div><label>Priorytet</label><select id="op"><option>Sredni</option><option>Wysoki</option><option>Niski</option></select></div></div>'
+    +'<div class="btn-row"><button class="btn bg2" onclick="addO()">Zapisz</button>'
+    +'<button class="btn" onclick="showView(\'obs-lista\')">← Lista</button>'
+    +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
+}
+function addO(){
+  var d=ld(KO);
+  d.push({id:Date.now(),d:v('oda'),cat:v('ocat'),lin:v('olin'),zm:v('ozm'),
+    f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op')});
+  sv(KO,d);flash('omsg');renderDash();
+}
+function delO(id){if(!confirm('Usunąć?'))return;sv(KO,ld(KO).filter(function(r){return r.id!==id;}));renderDash();}
+function editO(id){
+  var r=ld(KO).find(function(x){return x.id===id;});
+  if(!r)return;
+  var oOpt=getObszarOptions();
+  document.getElementById('content-area').innerHTML=
+    '<div class="card"><div class="ct" style="color:#2e7d32">Edytuj Obserwację</div>'
+    +'<div class="fr c4"><div><label>Data</label><input id="oda" type="date" value="'+(r.d||today())+'"></div>'
+    +'<div><label>Kategoria</label><select id="ocat">'+getObsKatOptions(r.cat)+'</select></div>'
+    +'<div><label>Linia / obszar</label><select id="olin"><option value="">— wybierz —</option>'+oOpt+'<option>Inne</option></select></div>'
+    +'<div><label>Zmiana</label><select id="ozm">'
+    +'<option'+(r.zm==='Zmiana 1'?' selected':'')+'>Zmiana 1</option>'
+    +'<option'+(r.zm==='Zmiana 2'?' selected':'')+'>Zmiana 2</option>'
+    +'<option'+(r.zm==='Zmiana 3'?' selected':'')+'>Zmiana 3</option>'
+    +'</select></div></div>'
+    +'<div class="fr c2"><div><label>Co WIDZISZ? (fakty)</label><textarea id="of" style="height:70px">'+(r.f||'')+'</textarea></div>'
+    +'<div><label>Interpretacja</label><textarea id="oi" style="height:70px">'+(r.i||'')+'</textarea></div></div>'
+    +'<div class="fr c3"><div><label>Czy trafia do Kaizen?</label><select id="ok">'
+    +'<option'+(r.k==='Moze'?' selected':'')+'>Moze</option>'
+    +'<option'+(r.k==='Tak'?' selected':'')+'>Tak</option>'
+    +'<option'+(r.k==='Nie'?' selected':'')+'>Nie</option>'
+    +'</select></div>'
+    +'<div><label>Nr Kaizen</label><input id="okn" value="'+(r.kn||'')+'"></div>'
+    +'<div><label>Priorytet</label><select id="op">'
+    +'<option'+(r.pr==='Sredni'?' selected':'')+'>Sredni</option>'
+    +'<option'+(r.pr==='Wysoki'?' selected':'')+'>Wysoki</option>'
+    +'<option'+(r.pr==='Niski'?' selected':'')+'>Niski</option>'
+    +'</select></div></div>'
+    +'<div class="btn-row"><button class="btn bg2" onclick="saveEditO('+id+')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'obs-lista\')">← Anuluj</button>'
+    +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
+  setTimeout(function(){
+    var el=document.getElementById('olin'); if(el&&r.lin)el.value=r.lin;
+  },50);
+}
+function saveEditO(id){
+  var d=ld(KO);
+  var idx=d.findIndex(function(x){return x.id===id;});
+  if(idx<0)return;
+  d[idx]=Object.assign(d[idx],{d:v('oda'),cat:v('ocat'),lin:v('olin'),zm:v('ozm'),
+    f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op')});
+  sv(KO,d);flash('omsg');renderDash();setTimeout(function(){showView('obs-lista');},600);
+}
+
+// ── ZADANIA LISTA ─────────────────────────────────────────────────────────────
+function buildZadaniaLista(){
+  var d=ld(KZ).sort(function(a,b){var pm={Wysoki:0,Sredni:1,Niski:2};return(pm[a.pr]||1)-(pm[b.pr]||1);});
+  var now=today();
+  var rows=d.length?d.map(function(r){
+    var over=r.ter&&r.ter<now&&r.s!=='Gotowe'&&r.s!=='Anulowane';
+    return '<tr style="'+(over?'background:#fff5f5':'')+'"><td style="white-space:nowrap;font-size:12px">'+r.da+'</td>'
+      +'<td>'+pBdg(r.pr)+'</td>'
+      +'<td class="desc-col">'+(over?'<span style="color:#c62828;font-size:11px">TERMIN! </span>':'')+r.t+'</td>'
+      +'<td style="white-space:nowrap;font-size:12px">'+r.ter+'</td>'
+      +'<td style="text-align:center">'+daysHtml(r.ter,r.s)+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.o+'</td>'
+      +'<td style="font-size:12px;color:#888;max-width:160px;white-space:normal">'+r.pow+'</td>'
+      +'<td style="font-size:12px;color:#555;max-width:180px;white-space:normal">'+( r.op||'')+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.cat+'</td>'
+      +'<td>'+zBdg(r.s)+'</td>'
+      +'<td style="white-space:nowrap">'
+      +'<button class="btn-edit" onclick="editZ('+r.id+')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delZ('+r.id+');showView(\'zadania-lista\')">✕</button>'
+      +'</td></tr>';
+  }).join(''):'<tr><td colspan="11"><div class="empty">Brak zadań.</div></td></tr>';
+  return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#6a1b9a">Lista Zadań</span>'
+    +'<div class="frow"><select onchange="showView(\'zadania-lista\',this.value)"><option value="">Wszystkie statusy</option>'
+    +'<option>Do zrobienia</option><option>W trakcie</option><option>Gotowe</option><option>Zablokowane</option><option>Anulowane</option></select>'
+    +'<button class="btn bp" onclick="showView(\'zadania-dodaj\')">+ Dodaj</button></div></div>'
+    +'<div style="overflow-x:auto"><table><thead><tr><th>Data wyst.</th><th>Priorytet</th><th>Zadanie</th><th>Termin</th><th>Dni</th><th>Odpowiedzialny</th><th>Powiązane</th><th>Opis</th><th>Kat.</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+// ── ZADANIA DODAJ ─────────────────────────────────────────────────────────────
+function buildZadaniaDodaj(){
+  return '<div class="card"><div class="ct" style="color:#6a1b9a">Nowe Zadanie</div>'
+    +'<div class="fr c4"><div><label>Data wystawienia</label><input id="zda" type="date" value="'+today()+'"></div>'
+    +'<div><label>Priorytet</label><select id="zpr"><option>Sredni</option><option>Wysoki</option><option>Niski</option></select></div>'
+    +'<div><label>Status</label><select id="zst"><option>Do zrobienia</option><option>W trakcie</option><option>Gotowe</option><option>Zablokowane</option><option>Anulowane</option></select></div>'
+    +'<div><label>Termin</label><input id="zter" type="date"></div></div>'
+    +'<div class="fr c3"><div><label>Tytuł zadania</label><input id="zt" placeholder="Co zrobić"></div>'
+    +'<div><label>Kategoria (z Matrycy)</label><select id="zcat">'+getZadCatOptions('')+'</select></div>'
+    +'<div><label>Odpowiedzialny</label><input id="zo" placeholder="Imię / stanowisko"></div></div>'
+    +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px"></textarea></div>'
+    +'<div><label>Powiązane (nr Kaizen / źródło)</label><textarea id="zpow" style="height:60px"></textarea></div></div>'
+    +'<div class="btn-row"><button class="btn bp" onclick="addZ()">Zapisz</button>'
+    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Lista</button>'
+    +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
+}
+function addZ(){
+  var d=ld(KZ);
+  d.push({id:Date.now(),da:v('zda'),pr:v('zpr'),s:v('zst'),ter:v('zter'),
+    t:v('zt'),cat:v('zcat'),o:v('zo'),op:v('zop'),pow:v('zpow')});
+  sv(KZ,d);flash('zmsg');renderDash();
+}
+function delZ(id){if(!confirm('Usunąć?'))return;sv(KZ,ld(KZ).filter(function(r){return r.id!==id;}));renderDash();}
+function editZ(id){
+  var r=ld(KZ).find(function(x){return x.id===id;});
+  if(!r)return;
+  function opt(val,cur){return '<option'+(cur===val?' selected':'')+'>'+val+'</option>';}
+  document.getElementById('content-area').innerHTML=
+    '<div class="card"><div class="ct" style="color:#6a1b9a">Edytuj Zadanie</div>'
+    +'<div class="fr c4"><div><label>Data wystawienia</label><input id="zda" type="date" value="'+(r.da||today())+'"></div>'
+    +'<div><label>Priorytet</label><select id="zpr">'
+    +opt('Wysoki',r.pr)+opt('Sredni',r.pr)+opt('Niski',r.pr)
+    +'</select></div>'
+    +'<div><label>Status</label><select id="zst">'
+    +opt('Do zrobienia',r.s)+opt('W trakcie',r.s)+opt('Gotowe',r.s)+opt('Zablokowane',r.s)+opt('Anulowane',r.s)
+    +'</select></div>'
+    +'<div><label>Termin</label><input id="zter" type="date" value="'+(r.ter||'')+'"></div></div>'
+    +'<div class="fr c3"><div><label>Tytuł zadania</label><input id="zt" value="'+(r.t||'').replace(/"/g,'&quot;')+'"></div>'
+    +'<div><label>Kategoria</label><select id="zcat">'+getZadCatOptions(r.cat)+'</select></div>'
+    +'<div><label>Odpowiedzialny</label><input id="zo" value="'+(r.o||'')+'"></div></div>'
+    +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px">'+(r.op||'')+'</textarea></div>'
+    +'<div><label>Powiązane</label><textarea id="zpow" style="height:60px">'+(r.pow||'')+'</textarea></div></div>'
+    +'<div class="btn-row"><button class="btn bp" onclick="saveEditZ('+id+')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Anuluj</button>'
+    +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
+}
+function saveEditZ(id){
+  var d=ld(KZ);
+  var idx=d.findIndex(function(x){return x.id===id;});
+  if(idx<0)return;
+  d[idx]=Object.assign(d[idx],{da:v('zda'),pr:v('zpr'),s:v('zst'),ter:v('zter'),
+    t:v('zt'),cat:v('zcat'),o:v('zo'),op:v('zop'),pow:v('zpow')});
+  sv(KZ,d);flash('zmsg');renderDash();setTimeout(function(){showView('zadania-lista');},600);
+}
+
+// ── CELE ROCZNE ───────────────────────────────────────────────────────────────
+function buildCeleLista(){
+  var d=ld(KCE);
+  var rows=d.length?d.map(function(r){
+    var pct=r.typ==='%'?(+r.real||0):(r.cel>0?Math.min(100,Math.round((+r.real||0)/(+r.cel)*100)):0);
+    var barColor=pct>=100?'#2e7d32':pct>=70?'#e65100':'#c62828';
+    return '<tr><td style="font-weight:600;font-size:13px">'+r.name+'</td>'
+      +'<td style="font-size:12px;color:#666">'+r.kat+'</td>'
+      +'<td style="font-weight:700;color:#1F4E79">'+(r.cel||'—')+(r.typ==='PLN'?' PLN':r.typ==='%'?'%':'')+'</td>'
+      +'<td style="font-weight:700;color:#2e7d32">'+(r.real||'—')+(r.typ==='PLN'?' PLN':r.typ==='%'?'%':'')+'</td>'
+      +'<td style="min-width:120px"><div style="display:flex;align-items:center;gap:6px">'
+      +'<div class="cel-prog"><div class="cel-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
+      +'<span style="font-size:12px;font-weight:700;color:'+barColor+'">'+pct+'%</span></div></td>'
+      +'<td style="font-size:12px;color:#666">'+r.termin+'</td>'
+      +'<td><button class="btn bd" onclick="delCe('+r.id+');showView(\'cele-lista\')">✕</button></td></tr>';
+  }).join(''):'<tr><td colspan="7"><div class="empty">Brak celów. Dodaj pierwszy cel.</div></td></tr>';
+  return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#e65100">Cele Roczne 2026</span>'
+    +'<button class="btn bo" onclick="showView(\'cele-dodaj\')">+ Dodaj cel</button></div>'
+    +'<div style="overflow-x:auto"><table><thead><tr><th>Cel</th><th>Kategoria celu</th><th>Wartość docelowa</th><th>Realizacja</th><th>Postęp</th><th>Termin</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function buildCeleDodaj(){
+  return '<div class="card"><div class="ct" style="color:#e65100">Nowy Cel</div>'
+    +'<div class="fr c3"><div><label>Nazwa celu</label><input id="cname" placeholder="np. Redukcja braków do 1%"></div>'
+    +'<div><label>Kategoria celu (edycja ręczna)</label><input id="ckat" placeholder="np. Jakość, Kaizen, BHP..."></div>'
+    +'<div><label>Typ wartości</label><select id="ctyp"><option value="PLN">PLN – złotówki</option><option value="%">% – procenty</option><option value="szt">szt – sztuki</option><option value="min">min – minuty</option><option value="inne">inne</option></select></div></div>'
+    +'<div class="fr c4"><div><label>Wartość docelowa (cel)</label><input id="ccel" type="number" placeholder="np. 50000"></div>'
+    +'<div><label>Realizacja (wartość bieżąca)</label><input id="creal" type="number" placeholder="np. 32000"></div>'
+    +'<div><label>Termin realizacji</label><input id="cter" type="date"></div>'
+    +'<div><label>Właściciel celu</label><input id="cwl" placeholder="Imię / dział"></div></div>'
+    +'<div class="btn-row"><button class="btn bo" onclick="addCe()">Zapisz cel</button>'
+    +'<button class="btn" onclick="showView(\'cele-lista\')">← Lista</button>'
+    +'<span class="msg g" id="cemsg" style="display:none">Zapisano!</span></div></div>';
+}
+function addCe(){
+  var d=ld(KCE);
+  d.push({id:Date.now(),name:v('cname'),kat:v('ckat'),typ:v('ctyp'),
+    cel:+v('ccel')||0,real:+v('creal')||0,termin:v('cter'),wl:v('cwl')});
+  sv(KCE,d);flash('cemsg');renderDash();
+}
+function delCe(id){if(!confirm('Usunąć?'))return;sv(KCE,ld(KCE).filter(function(r){return r.id!==id;}));renderDash();}
+
+// ── PODSUMOWANIE – BI DASHBOARD ───────────────────────────────────────────────
+function buildPodsumowanie(){
+  var dk=ld(KK),doo=ld(KO),dz=ld(KZ),dce=ld(KCE);
+  var est=dk.reduce(function(a,r){return a+(+r.e||0);},0);
+  var zwr=dk.reduce(function(a,r){return a+(+r.z||0);},0);
+  var wdr=dk.filter(function(r){return r.s==='Wdrozone';}).length;
+  var zOver=dz.filter(function(r){return r.ter&&r.ter<today()&&r.s!=='Gotowe'&&r.s!=='Anulowane';}).length;
+  var obsM=doo.filter(function(r){return(r.d||'').substring(0,7)===thisMonth();}).length;
+  var html='<div class="bi-header">'
+    +'<div><div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Analytics Dashboard</div>'
+    +'<h2>📊 Podsumowanie - Wykresy</h2><div class="bi-sub">Kliknij wykres aby powiększyć</div></div>'
+    +'<div class="bi-kpis">'
+    +'<div class="bi-kpi"><div class="val">'+dk.length+'</div><div class="lbl">Kaizen</div></div>'
+    +'<div class="bi-kpi"><div class="val">'+doo.length+'</div><div class="lbl">Obserwacje</div></div>'
+    +'<div class="bi-kpi"><div class="val">'+dz.length+'</div><div class="lbl">Zadania</div></div>'
+    +'<div class="bi-kpi"><div class="val" style="color:'+(zOver>0?'#ff8a80':'#80cbc4')+'">'+zOver+'</div><div class="lbl">Po terminie</div></div>'
+    +'<div class="bi-kpi"><div class="val">'+fmt(est)+'</div><div class="lbl">PLN estym.</div></div>'
+    +'</div></div>'
+    // Rząd 1 – 4 małe wykresy kołowe
+    +'<div class="charts-grid">'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-kstatus\',\'Kaizen – statusy\')"><h3>Kaizen – statusy<span class="zoom-icon">⛶</span></h3><canvas id="ch-kstatus"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-ocat\',\'Obserwacje – kategorie\')"><h3>Obserwacje – kat.<span class="zoom-icon">⛶</span></h3><canvas id="ch-ocat"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-zstatus\',\'Zadania – statusy\')"><h3>Zadania – statusy<span class="zoom-icon">⛶</span></h3><canvas id="ch-zstatus"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-zprio\',\'Zadania – priorytety\')"><h3>Zadania – priorytety<span class="zoom-icon">⛶</span></h3><canvas id="ch-zprio"></canvas></div>'
+    +'</div>'
+    // Rząd 2 – 3 wykresy kolumnowe
+    +'<div class="charts-grid three">'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-trend\',\'Obserwacje – trend 6 miesięcy\')"><h3>Trend obserwacji (6 m-c)<span class="zoom-icon">⛶</span></h3><canvas id="ch-trend"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-klin\',\'Kaizen wg linii\')"><h3>Kaizen wg linii<span class="zoom-icon">⛶</span></h3><canvas id="ch-klin"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-pln\',\'Oszczędności PLN\')"><h3>Oszczędności PLN<span class="zoom-icon">⛶</span></h3><canvas id="ch-pln"></canvas></div>'
+    +'</div>'
+    // Rząd 3 – realizacja celów full width
+    +'<div class="charts-grid two">'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-cele\',\'Realizacja celów\')"><h3>Realizacja celów [%]<span class="zoom-icon">⛶</span></h3><canvas id="ch-cele"></canvas></div>'
+    +'<div class="chart-card" onclick="zoomChart(\'ch-kwave\',\'Kaizen – aktywność miesięczna\')"><h3>Kaizen – aktywność (6 m-c)<span class="zoom-icon">⛶</span></h3><canvas id="ch-kwave"></canvas></div>'
+    +'</div>';
+  return html;
+}
+
+var _chartConfigs={};
+
+function renderCharts(){
+  var dk=ld(KK),doo=ld(KO),dz=ld(KZ),dce=ld(KCE);
+  var linie=['P1','P2','P3','Inne'];
+
+  function mkPie(labels,data,colors){return{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:2,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:6}}}}};}
+  function mkBar(labels,data,color,multi){
+    if(multi){return{type:'bar',data:{labels:labels,datasets:multi},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}};}
+    return{type:'bar',data:{labels:labels,datasets:[{data:data,backgroundColor:color,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}};
+  }
+  function mkLine(labels,data,color){return{type:'line',data:{labels:labels,datasets:[{data:data,borderColor:color,backgroundColor:color+'33',fill:true,tension:.35,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:10}}}}}};}
+
+  var kStats=['Zgłosz.','Zatwier.','W trakcie','Wdrożone','Odrzucone'];
+  var kStatsFull=['Zgloszone','Zatwierdzone','W trakcie','Wdrozone','Odrzucone'];
+  _chartConfigs['ch-kstatus']=mkPie(kStats,kStatsFull.map(function(s){return dk.filter(function(r){return r.s===s;}).length;}),['#9e9e9e','#1565c0','#e65100','#2e7d32','#c62828']);
+
+  var oCats=['SAFETY','MASZYNY','QUALITY','GHP/GMP','LUDZIE','PROCESY','Inne'];
+  _chartConfigs['ch-ocat']=mkPie(oCats,oCats.map(function(c){return doo.filter(function(r){return r.cat===c;}).length;}),['#c62828','#e65100','#ff8f00','#1565c0','#6a1b9a','#2e7d32','#9e9e9e']);
+
+  var zStats=['Do zrob.','W trakcie','Gotowe','Zablok.','Anulow.'];
+  var zStatsFull=['Do zrobienia','W trakcie','Gotowe','Zablokowane','Anulowane'];
+  _chartConfigs['ch-zstatus']=mkPie(zStats,zStatsFull.map(function(s){return dz.filter(function(r){return r.s===s;}).length;}),['#9e9e9e','#1565c0','#2e7d32','#c62828','#bdbdbd']);
+
+  var prioL=['Wysoki','Sredni','Niski'];
+  _chartConfigs['ch-zprio']=mkPie(prioL,prioL.map(function(p){return dz.filter(function(r){return r.pr===p;}).length;}),['#c62828','#e65100','#2e7d32']);
+
+  // Trend obserwacji
+  var months=[],mCounts=[];
+  for(var i=5;i>=0;i--){var d2=new Date();d2.setMonth(d2.getMonth()-i);var ym=d2.toISOString().substring(0,7);months.push(ym.substring(5)+'/'+ym.substring(2,4));mCounts.push(doo.filter(function(r){return(r.d||'').substring(0,7)===ym;}).length);}
+  _chartConfigs['ch-trend']=mkLine(months,mCounts,'#2e7d32');
+
+  // Kaizen wg linii
+  var kLinCounts=linie.map(function(l){return dk.filter(function(r){return(r.l||'').indexOf(l)>=0;}).length;});
+  _chartConfigs['ch-klin']=mkBar(linie,kLinCounts,['#1a56db','#2e7d32','#e65100','#9e9e9e']);
+
+  // PLN estym vs zwerif
+  var estL=linie.map(function(l){return dk.filter(function(r){return(r.l||'').indexOf(l)>=0;}).reduce(function(a,r){return a+(+r.e||0);},0);});
+  var zwrL=linie.map(function(l){return dk.filter(function(r){return(r.l||'').indexOf(l)>=0;}).reduce(function(a,r){return a+(+r.z||0);},0);});
+  _chartConfigs['ch-pln']=mkBar(linie,null,null,[{label:'Estymowane',data:estL,backgroundColor:'#B5D4F4',borderRadius:4},{label:'Zweryfikowane',data:zwrL,backgroundColor:'#2e7d32',borderRadius:4}]);
+
+  // Realizacja celów
+  var ceNames=dce.length?dce.map(function(r){return r.name.length>12?r.name.substring(0,12)+'…':r.name;}):['Brak celów'];
+  var cePcts=dce.length?dce.map(function(r){return r.typ==='%'?(+r.real||0):(r.cel>0?Math.min(100,Math.round((+r.real||0)/(+r.cel)*100)):0);}):([0]);
+  var ceBg=cePcts.map(function(p){return p>=100?'#2e7d32':p>=70?'#e65100':'#c62828';});
+  _chartConfigs['ch-cele']=mkBar(ceNames,cePcts,ceBg);
+
+  // Kaizen aktywność miesięczna
+  var kMonths=[],kMCounts=[];
+  for(var j=5;j>=0;j--){var d3=new Date();d3.setMonth(d3.getMonth()-j);var ym2=d3.toISOString().substring(0,7);kMonths.push(ym2.substring(5)+'/'+ym2.substring(2,4));kMCounts.push(dk.filter(function(r){return(r.da||'').substring(0,7)===ym2;}).length);}
+  _chartConfigs['ch-kwave']=mkLine(kMonths,kMCounts,'#1a56db');
+
+  // Renderuj wszystkie
+  Object.keys(_chartConfigs).forEach(function(id){
+    var ctx=document.getElementById(id);
+    if(ctx)new Chart(ctx,_chartConfigs[id]);
+  });
+}
+
+var _zoomChart=null;
+function zoomChart(id,title){
+  var cfg=_chartConfigs[id];if(!cfg)return;
+  document.getElementById('ch-modal-title').textContent=title;
+  var mc=document.getElementById('ch-modal-canvas');
+  mc.width=mc.width; // reset
+  if(_zoomChart){_zoomChart.destroy();_zoomChart=null;}
+  var cfgCopy=JSON.parse(JSON.stringify(cfg));
+  // Bigger fonts for modal
+  if(cfgCopy.options&&cfgCopy.options.plugins&&cfgCopy.options.plugins.legend&&cfgCopy.options.plugins.legend.labels)
+    cfgCopy.options.plugins.legend.labels.font={size:13};
+  if(cfgCopy.options&&cfgCopy.options.scales){
+    if(cfgCopy.options.scales.x&&cfgCopy.options.scales.x.ticks)cfgCopy.options.scales.x.ticks.font={size:12};
+    if(cfgCopy.options.scales.y&&cfgCopy.options.scales.y.ticks)cfgCopy.options.scales.y.ticks.font={size:12};
+  }
+  _zoomChart=new Chart(mc,cfgCopy);
+  document.getElementById('ch-modal').classList.add('open');
+}
+function closeChModal(e){
+  if(e&&e.target!==document.getElementById('ch-modal')&&!e.target.classList.contains('ch-modal-close'))return;
+  document.getElementById('ch-modal').classList.remove('open');
+  if(_zoomChart){_zoomChart.destroy();_zoomChart=null;}
+}
+
+// ── MATRYCA KATEGORII ─────────────────────────────────────────────────────────
+function buildMatryca(){
+  var m=getMatrix();
+  var cats=Object.keys(m);
+  var html='<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0">⚙ Matryca kategorii</span>'
+    +'<div class="frow"><input id="new-cat-name" placeholder="Nazwa nowej kategorii" style="width:160px">'
+    +'<button class="btn bn" onclick="addCategory()">+ Dodaj kategorię</button></div></div>'
+    +'<p style="font-size:12px;color:#666;margin-bottom:14px">Zmiany w matrycy aktualizują listy wyboru w formularzach Kaizen i Obserwacje.</p></div>'
+    +'<div class="matrix-grid">';
+  cats.forEach(function(cat){
+    html+='<div class="matrix-card"><h3>'+cat
+      +'<div style="display:flex;gap:6px"><input id="new-item-code-'+cat+'" placeholder="Kod" style="width:70px;font-size:12px">'
+      +'<input id="new-item-desc-'+cat+'" placeholder="Opis" style="width:140px;font-size:12px">'
+      +'<button class="btn bn" style="font-size:12px;padding:4px 8px" onclick="addMatrixItem(\''+cat+'\')">+</button>'
+      +'<button class="btn bd" style="font-size:12px;padding:4px 8px" onclick="delCategory(\''+cat+'\')">Usuń kat.</button>'
+      +'</div></h3>';
+    (m[cat]||[]).forEach(function(item,idx){
+      html+='<div class="matrix-item"><span class="code">'+item.code+'</span><span class="desc">'+item.desc+'</span>'
+        +'<button class="matrix-del" onclick="delMatrixItem(\''+cat+'\','+idx+')">✕</button></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+function addCategory(){
+  var name=v('new-cat-name').trim().toUpperCase();
+  if(!name)return;
+  var m=getMatrix();
+  if(m[name]){alert('Kategoria już istnieje.');return;}
+  m[name]=[];saveMatrix(m);showView('matryca');
+}
+function delCategory(cat){
+  if(!confirm('Usunąć kategorię '+cat+'?'))return;
+  var m=getMatrix();delete m[cat];saveMatrix(m);showView('matryca');
+}
+function addMatrixItem(cat){
+  var code=v('new-item-code-'+cat).trim();
+  var desc=v('new-item-desc-'+cat).trim();
+  if(!code)return;
+  var m=getMatrix();
+  m[cat]=m[cat]||[];
+  m[cat].push({code:code,desc:desc});
+  saveMatrix(m);showView('matryca');
+}
+function delMatrixItem(cat,idx){
+  var m=getMatrix();
+  m[cat].splice(idx,1);saveMatrix(m);showView('matryca');
+}
+
+// ── EKSPORT / IMPORT XLSX ────────────────────────────────────────────────────
+function fmtDateXls(d){
+  // Ensure date is stored as text YYYY-MM-DD for Excel
+  if(!d)return '';
+  return String(d).substring(0,10);
+}
+function parseDate(v){
+  // Handle Excel serial date numbers (e.g. 46125) or string dates
+  if(!v)return '';
+  if(typeof v==='number'){
+    // Excel date serial: days since 1900-01-00
+    var d=new Date(Math.round((v-25569)*86400*1000));
+    return d.toISOString().split('T')[0];
+  }
+  var s=String(v).trim();
+  // Handle DD.MM.YYYY or DD/MM/YYYY
+  var m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})$/);
+  if(m){
+    var y=m[3].length===2?'20'+m[3]:m[3];
+    return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  }
+  return s.substring(0,10);
+}
+
+function exportXLSX(){
+  var wb2=XLSX.utils.book_new();
+  var dk=ld(KK);
+  XLSX.utils.book_append_sheet(wb2,XLSX.utils.aoa_to_sheet(
+    [['Data','Status','Problem','Linia','Maszyna','Muda','Zglaszajacy','Rozwiazanie','Estym PLN','Zwerif PLN','Odpowiedzialny','Termin','Nr']].concat(
+    dk.map(function(r){return[fmtDateXls(r.da),r.s,r.p,r.l,r.masz||'',r.m||'',r.k||'',r.r||'',r.e||0,r.z||0,r.o||'',fmtDateXls(r.ter),r.n];})
+  )),'Kaizen');
+  var doo=ld(KO);
+  XLSX.utils.book_append_sheet(wb2,XLSX.utils.aoa_to_sheet(
+    [['Data','Kategoria','Obserwacja','Linia','Zmiana','Interpretacja','Kaizen?','Nr Kaizen','Priorytet']].concat(
+    doo.map(function(r){return[fmtDateXls(r.d),r.cat,r.f,r.lin,r.zm,r.i,r.k,r.kn||'',r.pr];})
+  )),'Obserwacje');
+  var dz=ld(KZ);
+  XLSX.utils.book_append_sheet(wb2,XLSX.utils.aoa_to_sheet(
+    [['Data wyst.','Priorytet','Zadanie','Kategoria','Status','Termin','Odpowiedzialny','Powiazanie','Opis']].concat(
+    dz.map(function(r){return[fmtDateXls(r.da),r.pr,r.t,r.cat,r.s,fmtDateXls(r.ter),r.o,r.pow||'',r.op||''];})
+  )),'Zadania');
+  var dce=ld(KCE);
+  XLSX.utils.book_append_sheet(wb2,XLSX.utils.aoa_to_sheet(
+    [['Cel','Kategoria celu','Typ','Wartosc docelowa','Realizacja','Termin','Wlasciciel']].concat(
+    dce.map(function(r){return[r.name,r.kat,r.typ,r.cel,r.real,fmtDateXls(r.termin),r.wl||''];})
+  )),'Cele');
+  XLSX.writeFile(wb2,'Tracker_2026_Teodor_'+today()+'.xlsx');
+}
+function importXLSX(event){
+  var file=event.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb2=XLSX.read(e.target.result,{type:'array',cellDates:false});
+      var imp={k:0,o:0,z:0,c:0};
+      if(wb2.SheetNames.indexOf('Kaizen')>=0){
+        var r=XLSX.utils.sheet_to_json(wb2.Sheets['Kaizen'],{raw:true});
+        sv(KK,r.map(function(x,i){return{
+          id:Date.now()+i,
+          da:parseDate(x['Data']),
+          s:x['Status']||'Zgloszone',
+          p:x['Problem']||'',
+          l:x['Linia']||'',
+          masz:x['Maszyna']||'',
+          m:x['Muda']||'',
+          k:x['Zglaszajacy']||'',
+          r:x['Rozwiazanie']||'',
+          e:+x['Estym PLN']||0,
+          z:+x['Zwerif PLN']||0,
+          o:x['Odpowiedzialny']||'',
+          ter:parseDate(x['Termin']),
+          n:x['Nr']||('K-'+(i+1))
+        };}));imp.k=r.length;
+      }
+      if(wb2.SheetNames.indexOf('Obserwacje')>=0){
+        var r2=XLSX.utils.sheet_to_json(wb2.Sheets['Obserwacje'],{raw:true});
+        sv(KO,r2.map(function(x,i){return{
+          id:Date.now()+1000+i,
+          d:parseDate(x['Data']),
+          cat:x['Kategoria']||'',
+          f:x['Obserwacja']||'',
+          lin:x['Linia']||'',
+          zm:x['Zmiana']||'',
+          i:x['Interpretacja']||'',
+          k:x['Kaizen?']||'Nie',
+          kn:x['Nr Kaizen']||'',
+          pr:x['Priorytet']||'Sredni'
+        };}));imp.o=r2.length;
+      }
+      if(wb2.SheetNames.indexOf('Zadania')>=0){
+        var r3=XLSX.utils.sheet_to_json(wb2.Sheets['Zadania'],{raw:true});
+        sv(KZ,r3.map(function(x,i){return{
+          id:Date.now()+2000+i,
+          da:parseDate(x['Data wyst.']),
+          pr:x['Priorytet']||'Sredni',
+          t:x['Zadanie']||'',
+          cat:x['Kategoria']||'',
+          s:x['Status']||'Do zrobienia',
+          ter:parseDate(x['Termin']),
+          o:x['Odpowiedzialny']||'',
+          pow:x['Powiazanie']||'',
+          op:x['Opis']||''
+        };}));imp.z=r3.length;
+      }
+      if(wb2.SheetNames.indexOf('Cele')>=0){
+        var r4=XLSX.utils.sheet_to_json(wb2.Sheets['Cele'],{raw:true});
+        sv(KCE,r4.map(function(x,i){return{
+          id:Date.now()+3000+i,
+          name:x['Cel']||'',
+          kat:x['Kategoria celu']||'',
+          typ:x['Typ']||'PLN',
+          cel:+x['Wartosc docelowa']||0,
+          real:+x['Realizacja']||0,
+          termin:parseDate(x['Termin']),
+          wl:x['Wlasciciel']||''
+        };}));imp.c=r4.length;
+      }
+      renderDash();
+      alert('Import OK!\nKaizen: '+imp.k+'\nObserwacje: '+imp.o+'\nZadania: '+imp.z+'\nCele: '+imp.c);
+    }catch(err){alert('Błąd importu: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);event.target.value='';
+}
+
+// ── SYNC URL ──────────────────────────────────────────────────────────────────
+function generateSyncUrl(){
+  var data={k:ld(KK),o:ld(KO),z:ld(KZ),c:ldc(),ce:ld(KCE)};
+  var enc=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  var url=window.location.href.split('?')[0].split('#')[0]+'?d='+enc;
+  document.getElementById('sync-url-box').value=url;
+}
+function copySyncUrl(){
+  generateSyncUrl();var box=document.getElementById('sync-url-box');box.select();
+  try{navigator.clipboard.writeText(box.value).then(function(){flash('copy-msg');}).catch(function(){document.execCommand('copy');flash('copy-msg');});}
+  catch(e){document.execCommand('copy');flash('copy-msg');}
+}
+function toggleSync(){
+  var p=document.getElementById('sync-panel');var vis=p.style.display!=='none';
+  p.style.display=vis?'none':'block';if(!vis)generateSyncUrl();
+}
+function loadFromUrl(){
+  var params=new URLSearchParams(window.location.search);var d=params.get('d');if(!d)return false;
+  try{
+    var data=JSON.parse(decodeURIComponent(escape(atob(d))));
+    if(data.k)sv(KK,data.k);if(data.o)sv(KO,data.o);if(data.z)sv(KZ,data.z);
+    if(data.c)localStorage.setItem(KC,JSON.stringify(data.c));
+    if(data.ce)sv(KCE,data.ce);
+    if(window.history&&window.history.replaceState)window.history.replaceState({},'',window.location.pathname);
+    return true;
+  }catch(e){return false;}
+}
+
+// ── LOGOWANIE ─────────────────────────────────────────────────────────────────
+var PASS_KEY='t26pass';
+var SESS_KEY='t26sess';
+var SESSION_HOURS=8;
+var DEFAULT_PASS='brenntag2026';
+
+function getPassHash(){return localStorage.getItem(PASS_KEY)||hashStr(DEFAULT_PASS);}
+function hashStr(s){
+  var h=0;
+  for(var i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;}
+  return h.toString(36);
+}
+function isLoggedIn(){
+  try{
+    var sess=JSON.parse(localStorage.getItem(SESS_KEY)||'{}');
+    if(!sess.t)return false;
+    return(Date.now()-sess.t)<SESSION_HOURS*3600*1000;
+  }catch(e){return false;}
+}
+function doLogin(){
+  var pwd=document.getElementById('login-pwd').value;
+  var err=document.getElementById('login-err');
+  if(!pwd){err.textContent='Wpisz hasło.';return;}
+  if(hashStr(pwd)===getPassHash()){
+    localStorage.setItem(SESS_KEY,JSON.stringify({t:Date.now()}));
+    document.getElementById('login-screen').style.display='none';
+    renderDash();
+    err.textContent='';
+  } else {
+    err.textContent='Nieprawidłowe hasło. Spróbuj ponownie.';
+    document.getElementById('login-pwd').value='';
+    document.getElementById('login-pwd').focus();
+  }
+}
+function showChangePass(){
+  var curr=prompt('Podaj aktualne hasło:');
+  if(curr===null)return;
+  if(hashStr(curr)!==getPassHash()){alert('Nieprawidłowe aktualne hasło.');return;}
+  var n1=prompt('Podaj nowe hasło (min. 6 znaków):');
+  if(!n1||n1.length<6){alert('Hasło musi mieć min. 6 znaków.');return;}
+  var n2=prompt('Powtórz nowe hasło:');
+  if(n1!==n2){alert('Hasła się różnią.');return;}
+  localStorage.setItem(PASS_KEY,hashStr(n1));
+  alert('Hasło zmienione! Nowe hasło: '+n1);
+}
+function logout(){
+  localStorage.removeItem(SESS_KEY);
+  location.reload();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+var fromUrl=loadFromUrl();
+if(isLoggedIn()){
+  document.getElementById('login-screen').style.display='none';
+  renderDash();
+} else {
+  document.getElementById('login-screen').style.display='flex';
+  setTimeout(function(){document.getElementById('login-pwd').focus();},100);
+}
+if(fromUrl)alert('Dane wczytane z linku i zapisane lokalnie.');
+</script>
+</body>
+</html>
