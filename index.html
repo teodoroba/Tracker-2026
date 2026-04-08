@@ -490,13 +490,13 @@ function buildKaizenLista(){
       +'<td>'+kBdg(r.s)+'</td>'
       +'<td style="font-weight:700;white-space:nowrap;font-size:12px;color:#1F4E79">'+r.n+'</td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editK(\'\2\')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delK(\'\2\');showView(\'\1\')">✕</button>'
+      +'<button class="btn-edit" onclick="editK(\'+r.id+\')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delK(\'+r.id+\');showView(\'kaizen-lista\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="10"><div class="empty">Brak wpisów.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#1a56db">Lista Kaizen</span>'
-    +'<div class="frow"><select onchange="showView(\'\2\')" id="kfs"><option value="">Wszystkie statusy</option><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select>'
-    +'<button class="btn bl" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
+    +'<div class="frow"><select onchange="showView(\'+r.id+\')" id="kfs"><option value="">Wszystkie statusy</option><option>Zgloszone</option><option>Zatwierdzone</option><option>W trakcie</option><option>Wdrozone</option><option>Odrzucone</option></select>'
+    +'<button class="btn bl" onclick="showView(\'kaizen-dodaj\')">+ Dodaj</button></div></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Problem</th><th>Linia</th><th>Maszyna</th><th>Est. PLN</th><th>Zwerif. PLN</th><th>Odp.</th><th>Status</th><th>Nr</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function editK(id){
@@ -519,8 +519,8 @@ function editK(id){
     +'<div><label>Oszczędność zwerif. [PLN/rok]</label><input id="kz" type="number" value="'+(r.z||0)+'"></div>'
     +'<div><label>Odpowiedzialny</label><input id="ko" value="'+(r.o||'')+'"></div>'
     +'<div><label>Termin wdrożenia</label><input id="kt" type="date" value="'+(r.ter||'')+'"></div></div>'
-    +'<div class="btn-row"><button class="btn bl" onclick="saveEditK(\'\2\')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bl" onclick="saveEditK(\'+r.id+\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Anuluj</button>'
     +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
   // Set select values that need js
   setTimeout(function(){
@@ -557,7 +557,7 @@ function buildKaizenDodaj(){
     +'<div><label>Odpowiedzialny</label><input id="ko" placeholder="Imię"></div>'
     +'<div><label>Termin wdrożenia</label><input id="kt" type="date"></div></div>'
     +'<div class="btn-row"><button class="btn bl" onclick="addK()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'kaizen-lista\')">← Lista</button>'
     +'<span class="msg g" id="kmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addK(){
@@ -577,15 +577,16 @@ function buildObsLista(cf){
   var catColors={SAFETY:'bg-r',MASZYNY:'bg-a',QUALITY:'bg-a','GHP/GMP':'bg-b'};
   var rows=d.length?d.map(function(r){
     return '<tr><td style="white-space:nowrap;font-size:12px">'+r.d+'</td>'
+      +'<td><span class="badge '+(catColors[r.cat]||'bg-gr')+'">'+r.cat+'</span></td>'
       +'<td class="desc-col">'+r.f+'</td>'
       +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.lin+'</td>'
+      +'<td style="font-size:12px;color:#666;white-space:nowrap">'+(r.masz||'—')+'</td>'
       +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.zm+'</td>'
       +'<td class="desc-sm" style="color:#666;font-style:italic">'+r.i+'</td>'
       +'<td>'+oBdg(r.k)+'</td>'
-      +'<td><span class="badge '+(catColors[r.cat]||'bg-gr')+'">'+r.cat+'</span></td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editO(\'\2\')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delO(\'\2\');showView(\'obs-lista\',\''+cf+'\')">✕</button>'
+      +'<button class="btn-edit" onclick="editO('+r.id+')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delO('+r.id+');showView(\'obs-lista\',\''+cf+'\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="8"><div class="empty">Brak obserwacji'+(cf?' – '+cf:'')+'.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#2e7d32">Obserwacje'+(cf?' – '+cf:'')+'</span>'
@@ -594,30 +595,34 @@ function buildObsLista(cf){
     +'<option'+(cf==='MASZYNY'?' selected':'')+'>MASZYNY</option><option'+(cf==='QUALITY'?' selected':'')+'>QUALITY</option>'
     +'<option'+(cf==='GHP/GMP'?' selected':'')+'>GHP/GMP</option><option'+(cf==='LUDZIE'?' selected':'')+'>LUDZIE</option>'
     +'<option'+(cf==='PROCESY'?' selected':'')+'>PROCESY</option><option'+(cf==='Inne'?' selected':'')+'>Inne</option></select>'
-    +'<button class="btn bg2" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
-    +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Obserwacja</th><th>Linia</th><th>Zmiana</th><th>Interpretacja</th><th>Kaizen?</th><th>Kat.</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    +'<button class="btn bg2" onclick="showView(\'obs-dodaj\')">+ Dodaj</button></div></div>'
+    +'<div style="overflow-x:auto"><table><thead><tr><th>Data</th><th>Kat.</th><th>Obserwacja</th><th>Linia</th><th>Maszyna</th><th>Zmiana</th><th>Interpretacja</th><th>Kaizen?</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 // ── OBSERWACJE DODAJ ──────────────────────────────────────────────────────────
 function buildObsDodaj(){
-  var oOpt=getObszarOptions();
+  var oOpt=getObszarOptions(); var mOpt=getMaszynaOptions();
+  var zOpt=getZadaniaListOptions('');
   return '<div class="card"><div class="ct" style="color:#2e7d32">Nowa Obserwacja</div>'
     +'<div class="fr c4"><div><label>Data</label><input id="oda" type="date" value="'+today()+'"></div>'
-    +'<div><label>Kategoria (z Matrycy)</label><select id="ocat">'+getObsKatOptions('')+'</select></div>'
+    +'<div><label>Kategoria</label><select id="ocat">'+getObsKatOptions('')+'</select></div>'
     +'<div><label>Linia / obszar</label><select id="olin"><option value="">— wybierz —</option>'+oOpt+'<option>Inne</option></select></div>'
-    +'<div><label>Zmiana</label><select id="ozm"><option>Zmiana 1</option><option>Zmiana 2</option><option>Zmiana 3</option></select></div></div>'
+    +'<div><label>Maszyna</label><select id="omasz"><option value="">— wybierz —</option>'+mOpt+'<option value="Inna">Inna</option></select></div></div>'
+    +'<div class="fr c3"><div><label>Zmiana</label><select id="ozm"><option>Zmiana 1</option><option>Zmiana 2</option><option>Zmiana 3</option></select></div>'
+    +'<div><label>Czy trafia do Kaizen?</label><select id="ok"><option>Moze</option><option>Tak</option><option>Nie</option></select></div>'
+    +'<div><label>Priorytet</label><select id="op">'+getPrioOptions('')+'</select></div></div>'
     +'<div class="fr c2"><div><label>Co WIDZISZ? (fakty – nie opinie)</label><textarea id="of" style="height:70px"></textarea></div>'
     +'<div><label>Interpretacja</label><textarea id="oi" style="height:70px"></textarea></div></div>'
-    +'<div class="fr c3"><div><label>Czy trafia do Kaizen?</label><select id="ok"><option>Moze</option><option>Tak</option><option>Nie</option></select></div>'
-    +'<div><label>Nr Kaizen</label><input id="okn" placeholder="K-003"></div>'
-    +'<div><label>Priorytet</label><select id="op"><option>Sredni</option><option>Wysoki</option><option>Niski</option></select></div></div>'
+    +'<div class="fr c2"><div><label>Nr Kaizen</label><input id="okn" placeholder="K-003"></div>'
+    +'<div><label>Powiązane zadanie</label><select id="opow"><option value="">— brak —</option>'+zOpt+'</select></div></div>'
     +'<div class="btn-row"><button class="btn bg2" onclick="addO()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'obs-lista\')">← Lista</button>'
+    +'<button class="btn bp" onclick="showView(\'zadania-dodaj\')">+ Dodaj zadanie</button>'
     +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addO(){
   var d=ld(KO);
-  d.push({id:Date.now(),d:v('oda'),cat:v('ocat'),lin:v('olin'),zm:v('ozm'),
+  d.push({id:Date.now(),d:v('oda'),cat:v('ocat'),lin:v('olin'),masz:v('omasz'),zm:v('ozm'),
     f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op'),pow:v('opow')});
   sv(KO,d);flash('omsg');renderDash();
 }
@@ -649,8 +654,8 @@ function editO(id){
     +'<option'+(r.pr==='Wysoki'?' selected':'')+'>Wysoki</option>'
     +'<option'+(r.pr==='Niski'?' selected':'')+'>Niski</option>'
     +'</select></div></div>'
-    +'<div class="btn-row"><button class="btn bg2" onclick="saveEditO(\'\2\')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bg2" onclick="saveEditO(\'+r.id+\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'obs-lista\')">← Anuluj</button>'
     +'<span class="msg g" id="omsg" style="display:none">Zapisano!</span></div></div>';
   setTimeout(function(){
     var el=document.getElementById('olin'); if(el&&r.lin)el.value=r.lin;
@@ -682,14 +687,14 @@ function buildZadaniaLista(){
       +'<td style="font-size:12px;color:#666;white-space:nowrap">'+r.cat+'</td>'
       +'<td>'+zBdg(r.s)+'</td>'
       +'<td style="white-space:nowrap">'
-      +'<button class="btn-edit" onclick="editZ(\'\2\')">✎ Edytuj</button>'
-      +'<button class="btn bd" onclick="delZ(\'\2\');showView(\'\1\')">✕</button>'
+      +'<button class="btn-edit" onclick="editZ(\'+r.id+\')">✎ Edytuj</button>'
+      +'<button class="btn bd" onclick="delZ(\'+r.id+\');showView(\'zadania-lista\')">✕</button>'
       +'</td></tr>';
   }).join(''):'<tr><td colspan="11"><div class="empty">Brak zadań.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#6a1b9a">Lista Zadań</span>'
     +'<div class="frow"><select onchange="showView(\'zadania-lista\',this.value)"><option value="">Wszystkie statusy</option>'
     +'<option>Do zrobienia</option><option>W trakcie</option><option>Gotowe</option><option>Zablokowane</option><option>Anulowane</option></select>'
-    +'<button class="btn bp" onclick="showView(\'\1\')">+ Dodaj</button></div></div>'
+    +'<button class="btn bp" onclick="showView(\'zadania-dodaj\')">+ Dodaj</button></div></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Data wyst.</th><th>Priorytet</th><th>Zadanie</th><th>Termin</th><th>Dni</th><th>Odpowiedzialny</th><th>Powiązane</th><th>Opis</th><th>Kat.</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
@@ -706,7 +711,7 @@ function buildZadaniaDodaj(){
     +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px"></textarea></div>'
     +'<div><label>Powiązane (nr Kaizen / źródło)</label><textarea id="zpow" style="height:60px"></textarea></div></div>'
     +'<div class="btn-row"><button class="btn bp" onclick="addZ()">Zapisz</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Lista</button>'
     +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addZ(){
@@ -735,8 +740,8 @@ function editZ(id){
     +'<div><label>Odpowiedzialny</label><input id="zo" value="'+(r.o||'')+'"></div></div>'
     +'<div class="fr c2"><div><label>Opis / szczegóły</label><textarea id="zop" style="height:60px">'+(r.op||'')+'</textarea></div>'
     +'<div><label>Powiązane</label><textarea id="zpow" style="height:60px">'+(r.pow||'')+'</textarea></div></div>'
-    +'<div class="btn-row"><button class="btn bp" onclick="saveEditZ(\'\2\')">💾 Zapisz zmiany</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Anuluj</button>'
+    +'<div class="btn-row"><button class="btn bp" onclick="saveEditZ(\'+r.id+\')">💾 Zapisz zmiany</button>'
+    +'<button class="btn" onclick="showView(\'zadania-lista\')">← Anuluj</button>'
     +'<span class="msg p" id="zmsg" style="display:none">Zapisano!</span></div></div>';
 }
 function saveEditZ(id){
@@ -762,10 +767,10 @@ function buildCeleLista(){
       +'<div class="cel-prog"><div class="cel-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
       +'<span style="font-size:12px;font-weight:700;color:'+barColor+'">'+pct+'%</span></div></td>'
       +'<td style="font-size:12px;color:#666">'+r.termin+'</td>'
-      +'<td><button class="btn bd" onclick="delCe(\'\2\');showView(\'\1\')">✕</button></td></tr>';
+      +'<td><button class="btn bd" onclick="delCe(\'+r.id+\');showView(\'cele-lista\')">✕</button></td></tr>';
   }).join(''):'<tr><td colspan="7"><div class="empty">Brak celów. Dodaj pierwszy cel.</div></td></tr>';
   return '<div class="card"><div class="tbl-hdr"><span class="ct" style="margin:0;color:#e65100">Cele Roczne 2026</span>'
-    +'<button class="btn bo" onclick="showView(\'\1\')">+ Dodaj cel</button></div>'
+    +'<button class="btn bo" onclick="showView(\'cele-dodaj\')">+ Dodaj cel</button></div>'
     +'<div style="overflow-x:auto"><table><thead><tr><th>Cel</th><th>Kategoria celu</th><th>Wartość docelowa</th><th>Realizacja</th><th>Postęp</th><th>Termin</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function buildCeleDodaj(){
@@ -778,7 +783,7 @@ function buildCeleDodaj(){
     +'<div><label>Termin realizacji</label><input id="cter" type="date"></div>'
     +'<div><label>Właściciel celu</label><input id="cwl" placeholder="Imię / dział"></div></div>'
     +'<div class="btn-row"><button class="btn bo" onclick="addCe()">Zapisz cel</button>'
-    +'<button class="btn" onclick="showView(\'\1\')">← Lista</button>'
+    +'<button class="btn" onclick="showView(\'cele-lista\')">← Lista</button>'
     +'<span class="msg g" id="cemsg" style="display:none">Zapisano!</span></div></div>';
 }
 function addCe(){
