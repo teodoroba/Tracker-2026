@@ -1239,9 +1239,16 @@ function loadFromUrl(){
 // jeśli na serwerze (https://) – używa api.php
 var API_URL = (location.protocol === 'file:') ? null : 'api.php';
 var _serverToken = localStorage.getItem('t26token') || '';
-var _serverMode = !!API_URL;
+var _serverMode = false; // ustalone po sprawdzeniu api.php
 var _dirty = false;
 var _saveTimer = null;
+
+// Sprawdź czy api.php istnieje na serwerze
+if (API_URL) {
+  fetch(API_URL + '?action=ping', {method:'GET'})
+    .then(function(r){ _serverMode = (r.status !== 404); })
+    .catch(function(){ _serverMode = false; });
+}
 
 function apiCall(action, method, body, callback) {
   if (!API_URL) { callback({ok:false,msg:'Tryb lokalny'}); return; }
