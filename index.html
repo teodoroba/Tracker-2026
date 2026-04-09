@@ -178,7 +178,7 @@ td.desc-sm{min-width:180px;max-width:280px;white-space:normal;font-size:13px}
   <div style="display:flex;align-items:center;gap:16px">
     <div>
       <div class="topbar h1">Tracker 2026 – Teodor</div>
-      <div class="sub">Brenntag &nbsp;·&nbsp; Produkcja KP</div>
+      <div class="sub">Brenntag &nbsp;·&nbsp; Produkcja KP &nbsp;<span id="srv-status" style="font-size:11px;opacity:.7"></span></div>
     </div>
     <button id="dash-btn" onclick="showDash()" style="display:none;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.18);color:#fff;white-space:nowrap">← Dashboard</button>
   </div>
@@ -543,7 +543,7 @@ function saveEditK(id){
   dk[idx]=Object.assign(dk[idx],{da:v('kda'),s:v('kst'),l:v('klin'),masz:v('kmasz'),
     k:v('kk'),m:v('km'),n:v('kn'),p:v('kp'),r:v('kr'),
     e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt')});
-  sv(KK,dk);flash('kmsg');renderDash();setTimeout(function(){showView('kaizen-lista');},600);
+  sv(KK,dk);flash('kmsg');renderDash();scheduleSave();setTimeout(function(){showView('kaizen-lista');},600);
 }
 
 // ── KAIZEN DODAJ ─────────────────────────────────────────────────────────────
@@ -573,9 +573,9 @@ function addK(){
   d.push({id:Date.now(),da:v('kda'),s:v('kst'),l:v('klin'),masz:v('kmasz'),
     k:v('kk'),m:v('km'),n:v('kn')||('K-'+(d.length+1)),p:v('kp'),r:v('kr'),
     e:+v('ke')||0,z:+v('kz')||0,o:v('ko'),ter:v('kt'),pow:v('kpow')});
-  sv(KK,d);flash('kmsg');renderDash();
+  sv(KK,d);flash('kmsg');renderDash();scheduleSave();
 }
-function delK(id){if(!confirm('Usunąć?'))return;sv(KK,ld(KK).filter(function(r){return r.id!==id;}));renderDash();}
+function delK(id){if(!confirm('Usunąć?'))return;sv(KK,ld(KK).filter(function(r){return r.id!==id;}));renderDash();scheduleSave();}
 
 // ── OBSERWACJE LISTA ──────────────────────────────────────────────────────────
 function buildObsLista(cf){
@@ -632,9 +632,9 @@ function addO(){
   var d=ld(KO);
   d.push({id:Date.now(),d:v('oda'),cat:v('ocat'),lin:v('olin'),masz:v('omasz'),zm:v('ozm'),
     f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op'),pow:v('opow')});
-  sv(KO,d);flash('omsg');renderDash();
+  sv(KO,d);flash('omsg');renderDash();scheduleSave();
 }
-function delO(id){if(!confirm('Usunąć?'))return;sv(KO,ld(KO).filter(function(r){return r.id!==id;}));renderDash();}
+function delO(id){if(!confirm('Usunąć?'))return;sv(KO,ld(KO).filter(function(r){return r.id!==id;}));renderDash();scheduleSave();}
 function editO(id){
   var r=ld(KO).find(function(x){return x.id===id;});
   if(!r)return;
@@ -675,7 +675,7 @@ function saveEditO(id){
   if(idx<0)return;
   d[idx]=Object.assign(d[idx],{d:v('oda'),cat:v('ocat'),lin:v('olin'),zm:v('ozm'),
     f:v('of'),i:v('oi'),k:v('ok'),kn:v('okn'),pr:v('op')});
-  sv(KO,d);flash('omsg');renderDash();setTimeout(function(){showView('obs-lista');},600);
+  sv(KO,d);flash('omsg');renderDash();scheduleSave();setTimeout(function(){showView('obs-lista');},600);
 }
 
 // ── ZADANIA LISTA ─────────────────────────────────────────────────────────────
@@ -726,9 +726,9 @@ function addZ(){
   var d=ld(KZ);
   d.push({id:Date.now(),da:v('zda'),pr:v('zpr'),s:v('zst'),ter:v('zter'),
     t:v('zt'),cat:v('zcat'),o:v('zo'),op:v('zop'),pow:v('zpow')});
-  sv(KZ,d);flash('zmsg');renderDash();
+  sv(KZ,d);flash('zmsg');renderDash();scheduleSave();
 }
-function delZ(id){if(!confirm('Usunąć?'))return;sv(KZ,ld(KZ).filter(function(r){return r.id!==id;}));renderDash();}
+function delZ(id){if(!confirm('Usunąć?'))return;sv(KZ,ld(KZ).filter(function(r){return r.id!==id;}));renderDash();scheduleSave();}
 function editZ(id){
   var r=ld(KZ).find(function(x){return x.id===id;});
   if(!r)return;
@@ -758,7 +758,7 @@ function saveEditZ(id){
   if(idx<0)return;
   d[idx]=Object.assign(d[idx],{da:v('zda'),pr:v('zpr'),s:v('zst'),ter:v('zter'),
     t:v('zt'),cat:v('zcat'),o:v('zo'),op:v('zop'),pow:v('zpow')});
-  sv(KZ,d);flash('zmsg');renderDash();setTimeout(function(){showView('zadania-lista');},600);
+  sv(KZ,d);flash('zmsg');renderDash();scheduleSave();setTimeout(function(){showView('zadania-lista');},600);
 }
 
 // ── CELE ROCZNE ───────────────────────────────────────────────────────────────
@@ -798,9 +798,9 @@ function addCe(){
   var d=ld(KCE);
   d.push({id:Date.now(),name:v('cname'),kat:v('ckat'),typ:v('ctyp'),
     cel:+v('ccel')||0,real:+v('creal')||0,termin:v('cter'),wl:v('cwl')});
-  sv(KCE,d);flash('cemsg');renderDash();
+  sv(KCE,d);flash('cemsg');renderDash();scheduleSave();
 }
-function delCe(id){if(!confirm('Usunąć?'))return;sv(KCE,ld(KCE).filter(function(r){return r.id!==id;}));renderDash();}
+function delCe(id){if(!confirm('Usunąć?'))return;sv(KCE,ld(KCE).filter(function(r){return r.id!==id;}));renderDash();scheduleSave();}
 
 // ── PODSUMOWANIE – BI DASHBOARD ───────────────────────────────────────────────
 function buildPodsumowanie(){
@@ -1234,6 +1234,60 @@ function loadFromUrl(){
   }catch(e){return false;}
 }
 
+// ── KONFIGURACJA SERWERA ─────────────────────────────────────────────────────
+// Jeśli plik jest otwarty lokalnie (file://) używa localStorage, 
+// jeśli na serwerze (https://) – używa api.php
+var API_URL = (location.protocol === 'file:') ? null : 'api.php';
+var _serverToken = localStorage.getItem('t26token') || '';
+var _serverMode = !!API_URL;
+var _dirty = false;
+var _saveTimer = null;
+
+function apiCall(action, method, body, callback) {
+  if (!API_URL) { callback({ok:false,msg:'Tryb lokalny'}); return; }
+  var opts = {
+    method: method || 'GET',
+    headers: {'Content-Type':'application/json','X-Session':_serverToken}
+  };
+  if (body) opts.body = JSON.stringify(body);
+  var url = API_URL + '?action=' + action + '&token=' + encodeURIComponent(_serverToken);
+  fetch(url, opts)
+    .then(function(r){ return r.json(); })
+    .then(function(d){ callback(d); })
+    .catch(function(e){ callback({ok:false,msg:e.message}); });
+}
+
+// Pobierz dane z serwera i wyrenderuj dashboard
+function loadFromServer(cb) {
+  apiCall('load', 'GET', null, function(resp) {
+    if (resp.ok && resp.data) {
+      var d = resp.data;
+      if(d.k) sv(KK, d.k);
+      if(d.o) sv(KO, d.o);
+      if(d.z) sv(KZ, d.z);
+      if(d.ce) sv(KCE, d.ce);
+      if(d.c) localStorage.setItem(KC, JSON.stringify(d.c));
+    }
+    if(cb) cb(resp.ok);
+  });
+}
+
+// Zapisz dane na serwer (debounce 2s)
+function scheduleSave() {
+  if (!_serverMode) return;
+  _dirty = true;
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function(){ pushToServer(); }, 2000);
+}
+function pushToServer(cb) {
+  if (!_serverMode || !_dirty) { if(cb)cb(true); return; }
+  var data = {k:ld(KK),o:ld(KO),z:ld(KZ),ce:ld(KCE),c:ldc()};
+  apiCall('save', 'POST', {data:data}, function(resp){
+    if(resp.ok) _dirty = false;
+    if(cb) cb(resp.ok);
+  });
+}
+
 // ── LOGOWANIE ─────────────────────────────────────────────────────────────────
 var PASS_KEY='t26pass';
 var SESS_KEY='t26sess';
@@ -1257,27 +1311,62 @@ function doLogin(){
   var pwd=document.getElementById('login-pwd').value;
   var err=document.getElementById('login-err');
   if(!pwd){err.textContent='Wpisz hasło.';return;}
-  if(hashStr(pwd)===getPassHash()){
-    localStorage.setItem(SESS_KEY,JSON.stringify({t:Date.now()}));
-    document.getElementById('login-screen').style.display='none';
-    renderDash();
-    err.textContent='';
+  err.textContent='⏳ Łączę...';
+  document.querySelector('.login-btn').disabled=true;
+
+  if(_serverMode){
+    // Tryb serwerowy – weryfikacja przez api.php
+    apiCall('login','POST',{password:pwd},function(resp){
+      document.querySelector('.login-btn').disabled=false;
+      if(resp.ok){
+        _serverToken=resp.token;
+        localStorage.setItem('t26token',_serverToken);
+        localStorage.setItem(SESS_KEY,JSON.stringify({t:Date.now()}));
+        err.textContent='⏳ Pobieram dane...';
+        loadFromServer(function(){
+          document.getElementById('login-screen').style.display='none';
+          renderDash();
+          err.textContent='';
+          var ss=document.getElementById('srv-status');if(ss)ss.textContent='☁ Tryb serwerowy';
+        });
+      } else {
+        err.textContent='Nieprawidłowe hasło.';
+        document.getElementById('login-pwd').value='';
+        document.getElementById('login-pwd').focus();
+      }
+    });
   } else {
-    err.textContent='Nieprawidłowe hasło. Spróbuj ponownie.';
-    document.getElementById('login-pwd').value='';
-    document.getElementById('login-pwd').focus();
+    // Tryb lokalny – weryfikacja lokalnie
+    document.querySelector('.login-btn').disabled=false;
+    if(hashStr(pwd)===getPassHash()){
+      localStorage.setItem(SESS_KEY,JSON.stringify({t:Date.now()}));
+      document.getElementById('login-screen').style.display='none';
+      renderDash();
+      err.textContent='';
+    } else {
+      err.textContent='Nieprawidłowe hasło. Spróbuj ponownie.';
+      document.getElementById('login-pwd').value='';
+      document.getElementById('login-pwd').focus();
+    }
   }
 }
 function showChangePass(){
   var curr=prompt('Podaj aktualne hasło:');
   if(curr===null)return;
-  if(hashStr(curr)!==getPassHash()){alert('Nieprawidłowe aktualne hasło.');return;}
   var n1=prompt('Podaj nowe hasło (min. 6 znaków):');
   if(!n1||n1.length<6){alert('Hasło musi mieć min. 6 znaków.');return;}
   var n2=prompt('Powtórz nowe hasło:');
   if(n1!==n2){alert('Hasła się różnią.');return;}
-  localStorage.setItem(PASS_KEY,hashStr(n1));
-  alert('Hasło zmienione! Nowe hasło: '+n1);
+  if(_serverMode){
+    apiCall('change_pass','POST',{old:curr,new:n1},function(resp){
+      if(resp.ok) alert('Hasło zmienione!');
+      else alert('Błąd: '+(resp.msg||'Spróbuj ponownie'));
+    });
+  } else {
+    if(hashStr(curr)!==getPassHash()){alert('Nieprawidłowe aktualne hasło.');return;}
+    localStorage.setItem(PASS_KEY,hashStr(n1));
+    alert('Hasło zmienione!');
+  }
 }
 function logout(){
   localStorage.removeItem(SESS_KEY);
@@ -1288,7 +1377,15 @@ function logout(){
 var fromUrl=loadFromUrl();
 if(isLoggedIn()){
   document.getElementById('login-screen').style.display='none';
-  renderDash();
+  if(_serverMode){
+    // Przy ponownym otwarciu – odśwież dane z serwera
+    loadFromServer(function(ok){
+      renderDash();
+      if(!ok) console.warn('Nie udało się pobrać danych z serwera, używam lokalnych');
+    });
+  } else {
+    renderDash();
+  }
 } else {
   document.getElementById('login-screen').style.display='flex';
   setTimeout(function(){document.getElementById('login-pwd').focus();},100);
